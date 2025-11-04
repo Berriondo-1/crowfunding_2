@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ColaboradroController;
+use App\Http\Controllers\AuditorController;
+use App\Http\Controllers\CreatorController;
 use App\Http\Controllers\ProfileController;
 
 
@@ -10,24 +13,24 @@ Route::get('/', function () {
 });
 
 // Panel de ADMIN
-Route::get('/admin', AdminDashboard::class)
-    ->middleware(['auth', 'role:ADMIN'])
+Route::get('/admin', [\App\Http\Controllers\AdminController::class, 'index'])
+    ->middleware(['auth','role:ADMIN'])
     ->name('admin.dashboard');
 
 // Panel de AUDITOR
-Route::get('/auditor', function () {
-    return view('auditor.dashboard');
-})->middleware(['auth', 'role:AUDITOR'])->name('auditor.dashboard');
+Route::get('/auditor', [\App\Http\Controllers\AuditorController::class, 'index'])
+    ->middleware(['auth','role:AUDITOR'])
+    ->name('auditor.dashboard');
 
 // Panel de CREADOR
-Route::get('/creator', function () {
-    return view('creator.dashboard');
-})->middleware(['auth', 'role:CREADOR'])->name('creator.dashboard');
+Route::get('/creator', [\App\Http\Controllers\CreatorController::class, 'index'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.dashboard');
 
 // Panel de COLABORADOR
-Route::get('/colaborador', function () {
-    return view('colaborador.dashboard');
-})->middleware(['auth', 'role:COLABORADOR'])->name('colaborador.dashboard');
+Route::get('/colaborador', [\App\Http\Controllers\ColaboradorController::class, 'index'])
+    ->middleware(['auth','role:COLABORADOR'])
+    ->name('colaborador.dashboard');
 
 // Dashboard general (fallback)
 Route::get('/dashboard', function () {
