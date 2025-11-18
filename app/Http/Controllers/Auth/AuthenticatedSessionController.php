@@ -36,7 +36,7 @@ class AuthenticatedSessionController extends Controller
         } elseif ($user->hasRole('AUDITOR')) {
             return redirect()->route('auditor.dashboard');
         } elseif ($user->hasRole('CREADOR')) {
-            return redirect()->route('creator.dashboard');
+            return redirect()->route('creador.dashboard');
         } elseif ($user->hasRole('COLABORADOR')) {
             return redirect()->route('colaborador.dashboard');
         }
