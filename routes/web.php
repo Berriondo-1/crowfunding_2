@@ -17,9 +17,33 @@ Route::get('/admin', [\App\Http\Controllers\AdminController::class, 'index'])
     ->middleware(['auth','role:ADMIN'])
     ->name('admin.dashboard');
 
+Route::get('/admin/roles', [\App\Http\Controllers\AdminController::class, 'roles'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.roles');
+
 Route::patch('/admin/users/{user}/roles', [\App\Http\Controllers\AdminController::class, 'updateUserRoles'])
     ->middleware(['auth','role:ADMIN'])
     ->name('admin.users.roles');
+
+Route::get('/admin/proyectos', [\App\Http\Controllers\AdminController::class, 'proyectos'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.proyectos');
+
+Route::get('/admin/auditorias', [\App\Http\Controllers\AdminController::class, 'auditorias'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.auditorias');
+
+Route::get('/admin/finanzas', [\App\Http\Controllers\AdminController::class, 'finanzas'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.finanzas');
+
+Route::get('/admin/proveedores', [\App\Http\Controllers\AdminController::class, 'proveedores'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.proveedores');
+
+Route::get('/admin/reportes', [\App\Http\Controllers\AdminController::class, 'reportes'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.reportes');
 
 // Panel de AUDITOR
 Route::get('/auditor', [\App\Http\Controllers\AuditorController::class, 'index'])
