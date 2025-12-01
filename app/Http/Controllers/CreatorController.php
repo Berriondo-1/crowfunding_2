@@ -38,4 +38,19 @@ class CreatorController extends Controller
     {
         return view('creator.modules.fondos');
     }
+
+    public function proveedores(): View
+    {
+        return view('creator.modules.proveedores');
+    }
+
+    public function perfil(): View
+    {
+        return view('creator.modules.perfil');
+    }
+
+    public function reportes(): View
+    {
+        return view('creator.modules.reportes');
+    }
 }
