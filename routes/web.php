@@ -79,6 +79,18 @@ Route::get('/creator/fondos', [\App\Http\Controllers\CreatorController::class, '
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.fondos');
 
+Route::get('/creator/proveedores', [\App\Http\Controllers\CreatorController::class, 'proveedores'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.proveedores');
+
+Route::get('/creator/perfil', [\App\Http\Controllers\CreatorController::class, 'perfil'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.perfil');
+
+Route::get('/creator/reportes', [\App\Http\Controllers\CreatorController::class, 'reportes'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.reportes');
+
 // Panel de COLABORADOR
 Route::get('/colaborador', [\App\Http\Controllers\ColaboradorController::class, 'index'])
     ->middleware(['auth','role:COLABORADOR'])
