@@ -83,6 +83,14 @@ Route::get('/creator/proveedores', [\App\Http\Controllers\CreatorController::cla
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.proveedores');
 
+Route::get('/creator/proveedores/crear', [\App\Http\Controllers\CreatorController::class, 'crearProveedor'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.proveedores.create');
+
+Route::get('/creator/proveedores/{proveedor}/editar', [\App\Http\Controllers\CreatorController::class, 'editarProveedor'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.proveedores.edit');
+
 Route::get('/creator/perfil', [\App\Http\Controllers\CreatorController::class, 'perfil'])
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.perfil');
@@ -108,6 +116,10 @@ Route::post('/creator/proveedores', [\App\Http\Controllers\CreatorController::cl
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.proveedores.store');
 
+Route::patch('/creator/proveedores/{proveedor}', [\App\Http\Controllers\CreatorController::class, 'updateProveedor'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.proveedores.update');
+
 Route::patch('/creator/perfil', [\App\Http\Controllers\CreatorController::class, 'updatePerfil'])
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.perfil.update');
@@ -116,6 +128,10 @@ Route::patch('/creator/perfil', [\App\Http\Controllers\CreatorController::class,
 Route::get('/colaborador', [\App\Http\Controllers\ColaboradorController::class, 'index'])
     ->middleware(['auth','role:COLABORADOR'])
     ->name('colaborador.dashboard');
+
+Route::post('/colaborador/logout', [\App\Http\Controllers\ColaboradorController::class, 'logout'])
+    ->middleware(['auth','role:COLABORADOR'])
+    ->name('colaborador.logout');
 
 // Dashboard general (fallback)
 Route::get('/dashboard', function () {
