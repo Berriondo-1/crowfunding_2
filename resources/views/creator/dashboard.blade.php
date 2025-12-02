@@ -159,81 +159,54 @@
 
                 <section id="modules">
                     <div class="flex flex-col gap-2">
-                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">Modulos clave</p>
-                        <h2 class="text-2xl font-bold text-white">Accesos rapidos</h2>
-                        <p class="text-sm text-zinc-400">Entra directo a lo que usas todos los dias.</p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">Estado financiero</p>
+                        <h2 class="text-2xl font-bold text-white">Financiamiento y salud del proyecto</h2>
+                        <p class="text-sm text-zinc-400">Resumen de recaudacion, gastos y proyecciones.</p>
                     </div>
-                    <div class="mt-4 rounded-3xl border border-white/10 bg-zinc-900/70 shadow-xl divide-y divide-white/5">
-                        <a href="{{ route('creador.proyectos') }}" class="flex items-center justify-between px-5 py-4 hover:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-200 font-bold">P</span>
+                    <div class="mt-4 grid gap-4 md:grid-cols-3">
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <p class="text-xs uppercase text-zinc-400">Recaudado</p>
+                            <p class="text-2xl font-bold text-emerald-200">${{ number_format($metrics['montoRecaudado'], 0, ',', '.') }}</p>
+                            <p class="text-xs text-zinc-500">vs meta total: {{ $metrics['avance'] }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <p class="text-xs uppercase text-zinc-400">Gastos reportados</p>
+                            <p class="text-2xl font-bold text-lime-200">${{ number_format($metrics['gastos'] ?? 0, 0, ',', '.') }}</p>
+                            <p class="text-xs text-zinc-500">Incluye proveedores y comprobantes</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <p class="text-xs uppercase text-zinc-400">Proyecciones</p>
+                            <p class="text-2xl font-bold text-white">En curso</p>
+                            <p class="text-xs text-zinc-500">Flujo esperado y hitos proximos</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid gap-6 lg:grid-cols-2">
+                        <div class="rounded-2xl border border-white/10 bg-zinc-900/70 p-5">
+                            <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm font-semibold text-white">Proyectos</p>
-                                    <p class="text-xs text-zinc-400">Configura campana, metas y presupuesto.</p>
+                                    <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Gastos y desembolsos</p>
+                                    <h3 class="text-lg font-semibold text-white">Ultimos movimientos</h3>
                                 </div>
+                                <a href="{{ route('creador.fondos') }}" class="text-xs text-emerald-200 hover:text-white">Ver fondos →</a>
                             </div>
-                            <span class="text-xs text-emerald-200">→</span>
-                        </a>
-                        <a href="{{ route('creador.recompensas') }}" class="flex items-center justify-between px-5 py-4 hover:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-200 font-bold">R</span>
+                            <div class="mt-4 space-y-3 text-sm text-zinc-300">
+                                <p>No hay gastos registrados aun. Agrega desembolsos y comprobantes en el modulo de fondos.</p>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-white/10 bg-zinc-900/70 p-5">
+                            <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm font-semibold text-white">Recompensas</p>
-                                    <p class="text-xs text-zinc-400">Define niveles y entregas para tus backers.</p>
+                                    <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Proyecciones</p>
+                                    <h3 class="text-lg font-semibold text-white">Hitos proximos</h3>
                                 </div>
+                                <a href="{{ route('creador.avances') }}" class="text-xs text-emerald-200 hover:text-white">Ver avances →</a>
                             </div>
-                            <span class="text-xs text-emerald-200">→</span>
-                        </a>
-                        <a href="{{ route('creador.avances') }}" class="flex items-center justify-between px-5 py-4 hover:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-200 font-bold">A</span>
-                                <div>
-                                    <p class="text-sm font-semibold text-white">Avances</p>
-                                    <p class="text-xs text-zinc-400">Publica hitos y evidencia.</p>
-                                </div>
+                            <div class="mt-4 space-y-3 text-sm text-zinc-300">
+                                <p>Define tu cronograma y presupuesto en tus proyectos para ver las proyecciones aqui.</p>
                             </div>
-                            <span class="text-xs text-emerald-200">→</span>
-                        </a>
-                        <a href="{{ route('creador.fondos') }}" class="flex items-center justify-between px-5 py-4 hover:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-200 font-bold">F</span>
-                                <div>
-                                    <p class="text-sm font-semibold text-white">Fondos</p>
-                                    <p class="text-xs text-zinc-400">Desembolsos y pagos a proveedores.</p>
-                                </div>
-                            </div>
-                            <span class="text-xs text-emerald-200">→</span>
-                        </a>
-                        <a href="{{ route('creador.proveedores') }}" class="flex items-center justify-between px-5 py-4 hover:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-200 font-bold">V</span>
-                                <div>
-                                    <p class="text-sm font-semibold text-white">Proveedores</p>
-                                    <p class="text-xs text-zinc-400">Directorio, contratos y performance.</p>
-                                </div>
-                            </div>
-                            <span class="text-xs text-emerald-200">→</span>
-                        </a>
-                        <a href="{{ route('creador.reportes') }}" class="flex items-center justify-between px-5 py-4 hover:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-200 font-bold">R</span>
-                                <div>
-                                    <p class="text-sm font-semibold text-white">Reportes</p>
-                                    <p class="text-xs text-zinc-400">KPIs, conversion y exportes.</p>
-                                </div>
-                            </div>
-                            <span class="text-xs text-emerald-200">→</span>
-                        </a>
-                        <a href="{{ route('creador.perfil') }}" class="flex items-center justify-between px-5 py-4 hover:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-200 font-bold">K</span>
-                                <div>
-                                    <p class="text-sm font-semibold text-white">Perfil y verificacion</p>
-                                    <p class="text-xs text-zinc-400">KYC, redes y confianza.</p>
-                                </div>
-                            </div>
-                            <span class="text-xs text-emerald-200">→</span>
-                        </a>
+                        </div>
                     </div>
                 </section>
 

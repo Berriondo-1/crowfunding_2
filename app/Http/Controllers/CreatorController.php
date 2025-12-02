@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActualizacionProyecto;
+use App\Models\Aportacion;
 use App\Models\Proveedor;
 use App\Models\Proyecto;
 use Illuminate\Http\RedirectResponse;
@@ -14,12 +15,27 @@ class CreatorController extends Controller
 {
     public function index(): View
     {
-        // Metricas de ejemplo (sustituir por consultas reales cuando existan modelos)
+        $userId = auth()->id();
+
+        $proyectos = Proyecto::where('creador_id', $userId)->get();
+
+        $recaudado = Aportacion::whereHas('proyecto', fn($q) => $q->where('creador_id', $userId))
+            ->sum('monto');
+
+        $metaTotal = $proyectos->sum('meta_financiacion');
+        $avance = $metaTotal > 0 ? round(($recaudado / $metaTotal) * 100) . '%' : '0%';
+
+        $colaboradores = Aportacion::whereHas('proyecto', fn($q) => $q->where('creador_id', $userId))
+            ->distinct('colaborador_id')
+            ->count('colaborador_id');
+
         $metrics = [
-            'proyectos'      => 0,
-            'montoRecaudado' => 0,
-            'colaboradores'  => 0,
-            'avance'         => '0%',
+            'proyectos'      => $proyectos->count(),
+            'montoRecaudado' => $recaudado,
+            'colaboradores'  => $colaboradores,
+            'avance'         => $avance,
+            'metaTotal'      => $metaTotal,
+            'gastos'         => 0, // sin modelo de gastos implementado
         ];
 
         return view('creator.dashboard', compact('metrics'));

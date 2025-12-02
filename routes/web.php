@@ -117,6 +117,10 @@ Route::get('/colaborador', [\App\Http\Controllers\ColaboradorController::class, 
     ->middleware(['auth','role:COLABORADOR'])
     ->name('colaborador.dashboard');
 
+Route::post('/colaborador/logout', [\App\Http\Controllers\ColaboradorController::class, 'logout'])
+    ->middleware(['auth','role:COLABORADOR'])
+    ->name('colaborador.logout');
+
 // Dashboard general (fallback)
 Route::get('/dashboard', function () {
     return view('dashboard');
