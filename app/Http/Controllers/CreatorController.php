@@ -7,6 +7,7 @@ use App\Models\Aportacion;
 use App\Models\Proveedor;
 use App\Models\ProveedorHistorial;
 use App\Models\Proyecto;
+use App\Models\Recompensa;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -49,9 +50,122 @@ class CreatorController extends Controller
         return view('creator.modules.proyectos', compact('proyectos'));
     }
 
-    public function recompensas(): View
+    public function recompensas(Request $request): View
     {
-        return view('creator.modules.recompensas');
+        $proyectos = Proyecto::where('creador_id', auth()->id())->get();
+        $selectedProjectId = $request->query('proyecto') ?? $proyectos->first()?->id;
+
+        $niveles = $this->getRecompensasPorProyecto($proyectos, $selectedProjectId);
+        $preview = $niveles->first();
+
+        return view('creator.modules.recompensas', compact('niveles', 'preview', 'proyectos', 'selectedProjectId'));
+    }
+
+    public function recompensasCrear(): View
+    {
+        $proyectos = Proyecto::where('creador_id', auth()->id())->get();
+
+        return view('creator.modules.recompensas-create', compact('proyectos'));
+    }
+
+    public function recompensasEditar(Recompensa $recompensa): View
+    {
+        $this->authorizeRecompensa($recompensa, auth()->id());
+        $proyectos = Proyecto::where('creador_id', auth()->id())->get();
+
+        return view('creator.modules.recompensas-edit', compact('recompensa', 'proyectos'));
+    }
+
+    public function recompensasGestionar(Request $request): View
+    {
+        $proyectos = Proyecto::where('creador_id', auth()->id())->get();
+        $selectedProjectId = $request->query('proyecto') ?? $proyectos->first()?->id;
+        $estadoFiltro = $request->query('estado');
+
+        $niveles = $this->getRecompensasPorProyecto($proyectos, $selectedProjectId, $estadoFiltro);
+
+        return view('creator.modules.recompensas-gestion', compact('niveles', 'proyectos', 'selectedProjectId', 'estadoFiltro'));
+    }
+
+    public function recompensasPreview(Request $request): View
+    {
+        $proyectos = Proyecto::where('creador_id', auth()->id())->get();
+        $selectedProjectId = $request->query('proyecto') ?? $proyectos->first()?->id;
+
+        $niveles = $this->getRecompensasPorProyecto($proyectos, $selectedProjectId);
+        $preview = $niveles->first();
+
+        return view('creator.modules.recompensas-preview', compact('preview', 'niveles', 'proyectos', 'selectedProjectId'));
+    }
+
+    public function storeRecompensa(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'proyecto_id' => ['required', 'exists:proyectos,id'],
+            'titulo' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'monto_minimo_aportacion' => ['required', 'numeric', 'min:0'],
+            'disponibilidad' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $proyecto = Proyecto::find($validated['proyecto_id']);
+        abort_unless($proyecto && $proyecto->creador_id === $request->user()->id, 403);
+
+        Recompensa::create([
+            'proyecto_id' => $validated['proyecto_id'],
+            'titulo' => $validated['titulo'],
+            'descripcion' => $validated['descripcion'] ?? null,
+            'monto_minimo_aportacion' => $validated['monto_minimo_aportacion'],
+            'disponibilidad' => $validated['disponibilidad'] ?? null,
+        ]);
+
+        return redirect()->route('creador.recompensas', ['proyecto' => $validated['proyecto_id']])
+            ->with('status', 'Recompensa publicada.');
+    }
+
+    public function updateRecompensa(Request $request, Recompensa $recompensa): RedirectResponse
+    {
+        $this->authorizeRecompensa($recompensa, $request->user()->id);
+
+        $validated = $request->validate([
+            'proyecto_id' => ['required', 'exists:proyectos,id'],
+            'titulo' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'monto_minimo_aportacion' => ['required', 'numeric', 'min:0'],
+            'disponibilidad' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $proyecto = Proyecto::find($validated['proyecto_id']);
+        abort_unless($proyecto && $proyecto->creador_id === $request->user()->id, 403);
+
+        $recompensa->update([
+            'proyecto_id' => $validated['proyecto_id'],
+            'titulo' => $validated['titulo'],
+            'descripcion' => $validated['descripcion'] ?? null,
+            'monto_minimo_aportacion' => $validated['monto_minimo_aportacion'],
+            'disponibilidad' => $validated['disponibilidad'] ?? null,
+        ]);
+
+        return redirect()->route('creador.recompensas', ['proyecto' => $validated['proyecto_id']])
+            ->with('status', 'Recompensa actualizada.');
+    }
+
+    public function toggleRecompensaEstado(Request $request, Recompensa $recompensa): RedirectResponse
+    {
+        $this->authorizeRecompensa($recompensa, $request->user()->id);
+        $nuevo = $this->descripcionEsPausada($recompensa->descripcion) ? 'activo' : 'pausado';
+        $recompensa->descripcion = $this->aplicarEstadoEnDescripcion($recompensa->descripcion, $nuevo);
+        $recompensa->save();
+
+        return redirect()->back()->with('status', "Recompensa {$nuevo}.");
+    }
+
+    public function eliminarRecompensa(Request $request, Recompensa $recompensa): RedirectResponse
+    {
+        $this->authorizeRecompensa($recompensa, $request->user()->id);
+        $recompensa->delete();
+
+        return redirect()->back()->with('status', 'Recompensa eliminada.');
     }
 
     public function avances(): View
@@ -332,5 +446,57 @@ class CreatorController extends Controller
         $decoded = json_decode($value, true);
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    private function getRecompensasPorProyecto($proyectos, $selectedProjectId, $estadoFiltro = null)
+    {
+        $query = Recompensa::with('proyecto')
+            ->whereHas('proyecto', fn($q) => $q->where('creador_id', auth()->id()));
+
+        if ($selectedProjectId) {
+            $query->where('proyecto_id', $selectedProjectId);
+        }
+
+        $registros = $query->orderBy('id')->get();
+
+        return $registros->map(function (Recompensa $r) {
+            return [
+                'id' => $r->id,
+                'titulo' => $r->titulo,
+                'monto' => $r->monto_minimo_aportacion,
+                'descripcion' => $r->descripcion ?? 'Sin descripcion',
+                'beneficios' => [],
+                'limite' => $r->disponibilidad,
+                'disponibles' => $r->disponibilidad,
+                'orden' => $r->id,
+                'estado' => $this->descripcionEsPausada($r->descripcion) ? 'pausado' : 'activo',
+                'entrega' => 'Pendiente',
+                'proyecto_id' => $r->proyecto_id,
+                'proyecto' => $r->proyecto->titulo ?? 'Proyecto',
+            ];
+        })->when($estadoFiltro, fn($c) => $c->where('estado', $estadoFiltro));
+    }
+
+    private function authorizeRecompensa(Recompensa $recompensa, int $userId): void
+    {
+        $recompensa->loadMissing('proyecto');
+        abort_unless(optional($recompensa->proyecto)->creador_id === $userId, 403);
+    }
+
+    private function descripcionEsPausada(?string $descripcion): bool
+    {
+        return str_starts_with((string) $descripcion, '[PAUSADO]');
+    }
+
+    private function aplicarEstadoEnDescripcion(?string $descripcion, string $estado): string
+    {
+        $desc = (string) $descripcion;
+        $limpia = ltrim($desc);
+
+        if ($this->descripcionEsPausada($limpia)) {
+            $limpia = preg_replace('/^\\[PAUSADO\\]\\s*/', '', $limpia) ?? '';
+        }
+
+        return $estado === 'pausado' ? '[PAUSADO] ' . $limpia : $limpia;
     }
 }

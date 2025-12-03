@@ -70,6 +70,30 @@ Route::get('/creator/proyectos', [\App\Http\Controllers\CreatorController::class
 Route::get('/creator/recompensas', [\App\Http\Controllers\CreatorController::class, 'recompensas'])
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.recompensas');
+Route::get('/creator/recompensas/crear', [\App\Http\Controllers\CreatorController::class, 'recompensasCrear'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.recompensas.create');
+Route::get('/creator/recompensas/gestion', [\App\Http\Controllers\CreatorController::class, 'recompensasGestionar'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.recompensas.gestion');
+Route::get('/creator/recompensas/preview', [\App\Http\Controllers\CreatorController::class, 'recompensasPreview'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.recompensas.preview');
+Route::post('/creator/recompensas', [\App\Http\Controllers\CreatorController::class, 'storeRecompensa'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.recompensas.store');
+Route::get('/creator/recompensas/{recompensa}/editar', [\App\Http\Controllers\CreatorController::class, 'recompensasEditar'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.recompensas.edit');
+Route::patch('/creator/recompensas/{recompensa}', [\App\Http\Controllers\CreatorController::class, 'updateRecompensa'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.recompensas.update');
+Route::patch('/creator/recompensas/{recompensa}/estado', [\App\Http\Controllers\CreatorController::class, 'toggleRecompensaEstado'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.recompensas.estado');
+Route::delete('/creator/recompensas/{recompensa}', [\App\Http\Controllers\CreatorController::class, 'eliminarRecompensa'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.recompensas.destroy');
 
 Route::get('/creator/avances', [\App\Http\Controllers\CreatorController::class, 'avances'])
     ->middleware(['auth','role:CREADOR'])
