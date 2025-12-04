@@ -98,6 +98,12 @@ Route::delete('/creator/recompensas/{recompensa}', [\App\Http\Controllers\Creato
 Route::get('/creator/avances', [\App\Http\Controllers\CreatorController::class, 'avances'])
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.avances');
+Route::patch('/creator/proyectos/{proyecto}/avances/{actualizacion}', [\App\Http\Controllers\CreatorController::class, 'updateAvance'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.proyectos.avances.update');
+Route::delete('/creator/proyectos/{proyecto}/avances/{actualizacion}', [\App\Http\Controllers\CreatorController::class, 'deleteAvance'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.proyectos.avances.delete');
 
 Route::get('/creator/fondos', [\App\Http\Controllers\CreatorController::class, 'fondos'])
     ->middleware(['auth','role:CREADOR'])

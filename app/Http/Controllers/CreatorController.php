@@ -168,9 +168,20 @@ class CreatorController extends Controller
         return redirect()->back()->with('status', 'Recompensa eliminada.');
     }
 
-    public function avances(): View
+    public function avances(Request $request): View
     {
-        return view('creator.modules.avances');
+        $proyectos = Proyecto::where('creador_id', auth()->id())->get();
+        $selectedProjectId = $request->query('proyecto') ?? $proyectos->first()?->id;
+
+        $actualizaciones = collect();
+        if ($selectedProjectId) {
+            $actualizaciones = ActualizacionProyecto::where('proyecto_id', $selectedProjectId)
+                ->orderByDesc('fecha_publicacion')
+                ->orderByDesc('id')
+                ->get();
+        }
+
+        return view('creator.modules.avances', compact('proyectos', 'selectedProjectId', 'actualizaciones'));
     }
 
     public function fondos(): View
@@ -327,19 +338,66 @@ class CreatorController extends Controller
 
     public function agregarAvance(Request $request, Proyecto $proyecto): RedirectResponse
     {
+        $this->authorizeProyecto($proyecto, $request->user()->id);
+
         $validated = $request->validate([
             'titulo' => ['required', 'string', 'max:255'],
             'contenido' => ['nullable', 'string'],
+            'es_hito' => ['nullable', 'boolean'],
+            'adjuntos.*' => ['nullable', 'file', 'max:8192'],
         ]);
+
+        $paths = $this->storeAdjuntos($request);
 
         ActualizacionProyecto::create([
             'proyecto_id' => $proyecto->id,
             'titulo' => $validated['titulo'],
             'contenido' => $validated['contenido'] ?? null,
             'fecha_publicacion' => now(),
+            'es_hito' => (bool) ($validated['es_hito'] ?? false),
+            'adjuntos' => $paths,
         ]);
 
         return redirect()->back()->with('status', 'Avance publicado.');
+    }
+
+    public function updateAvance(Request $request, Proyecto $proyecto, ActualizacionProyecto $actualizacion): RedirectResponse
+    {
+        $this->authorizeProyecto($proyecto, $request->user()->id);
+        abort_unless($actualizacion->proyecto_id === $proyecto->id, 403);
+
+        $validated = $request->validate([
+            'titulo' => ['required', 'string', 'max:255'],
+            'contenido' => ['nullable', 'string'],
+            'es_hito' => ['nullable', 'boolean'],
+            'adjuntos.*' => ['nullable', 'file', 'max:8192'],
+        ]);
+
+        $paths = $actualizacion->adjuntos ?? [];
+        if ($request->hasFile('adjuntos')) {
+            $this->deleteAdjuntos($paths);
+            $paths = $this->storeAdjuntos($request);
+        }
+
+        $actualizacion->update([
+            'titulo' => $validated['titulo'],
+            'contenido' => $validated['contenido'] ?? null,
+            'es_hito' => (bool) ($validated['es_hito'] ?? false),
+            'adjuntos' => $paths,
+        ]);
+
+        return redirect()->back()->with('status', 'Avance actualizado.');
+    }
+
+    public function deleteAvance(Request $request, Proyecto $proyecto, ActualizacionProyecto $actualizacion): RedirectResponse
+    {
+        $this->authorizeProyecto($proyecto, $request->user()->id);
+        abort_unless($actualizacion->proyecto_id === $proyecto->id, 403);
+
+        $this->deleteAdjuntos($actualizacion->adjuntos ?? []);
+        $actualizacion->delete();
+
+        return redirect()->back()->with('status', 'Avance eliminado.');
     }
 
     public function storeProveedor(Request $request): RedirectResponse
@@ -435,6 +493,30 @@ class CreatorController extends Controller
         $user->save();
 
         return redirect()->back()->with('status', 'Perfil actualizado.');
+    }
+
+    private function authorizeProyecto(Proyecto $proyecto, int $userId): void
+    {
+        abort_unless($proyecto->creador_id === $userId, 403);
+    }
+
+    private function storeAdjuntos(Request $request): array
+    {
+        $paths = [];
+        if ($request->hasFile('adjuntos')) {
+            foreach ($request->file('adjuntos') as $file) {
+                $paths[] = $file->store('actualizaciones', 'public');
+            }
+        }
+
+        return $paths;
+    }
+
+    private function deleteAdjuntos(array $paths): void
+    {
+        foreach ($paths as $path) {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     private function decodeJson(?string $value): ?array
