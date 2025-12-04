@@ -16,9 +16,13 @@ class ActualizacionProyecto extends Model
         'titulo',
         'contenido',
         'fecha_publicacion',
+        'es_hito',
+        'adjuntos',
     ];
 
     protected $casts = [
         'fecha_publicacion' => 'datetime',
+        'es_hito' => 'boolean',
+        'adjuntos' => 'array',
     ];
 }
