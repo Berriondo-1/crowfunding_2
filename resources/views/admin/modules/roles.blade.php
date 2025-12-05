@@ -28,35 +28,45 @@
     </header>
 
     <main class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
-        <section class="rounded-3xl border border-white/10 bg-gradient-to-r from-zinc-900/85 via-zinc-900/70 to-indigo-950/40 shadow-2xl">
-            <div class="border-b border-white/5 px-6 py-6 md:flex md:items-center md:justify-between">
-                <div class="space-y-2">
-                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Gestion operativa</p>
-                    <h2 class="text-2xl font-bold text-white">Asignacion de roles</h2>
-                    <p class="text-sm text-zinc-400">Filtra, busca y asigna roles de manera rapida.</p>
+        <section class="rounded-3xl border border-white/10 bg-zinc-900/75 shadow-2xl ring-1 ring-indigo-500/10">
+            <div class="border-b border-white/5 px-6 py-6 space-y-4">
+                <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Gestion operativa</p>
+                        <h2 class="text-2xl font-bold text-white">Asignacion de roles</h2>
+                        <p class="text-sm text-zinc-400">Un usuario solo puede tener un rol activo. Usa filtros y asigna con rapidez.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs text-zinc-300">
+                        <span class="rounded-xl border border-white/10 bg-white/5 px-4 py-2">Usuarios: {{ $users->total() }}</span>
+                        @php $verificados = $users->filter(fn($u) => $u->estado_verificacion)->count(); @endphp
+                        <span class="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-emerald-100">Verificados (pagina): {{ $verificados }}</span>
+                        <a href="{{ route('admin.verificaciones') }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white hover:border-indigo-400/60">
+                            Solicitudes de verificacion
+                        </a>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3 text-xs text-zinc-300 mt-3 md:mt-0">
-                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600/20 text-indigo-200 font-semibold">{{ $users->total() }}</span>
-                    usuarios encontrados
-                </div>
-            </div>
 
-            @if (session('status'))
-                <div class="mx-6 mt-6 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-6 py-4 text-sm text-emerald-200">
-                    {{ session('status') }}
-                </div>
-            @endif
+                @if (session('status'))
+                    <div class="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-6 py-4 text-sm text-emerald-200">
+                        {{ session('status') }}
+                    </div>
+                @endif
 
-            <div class="px-6 pt-6">
-                <form method="GET" action="{{ route('admin.roles') }}" class="grid gap-3 sm:grid-cols-[2fr,1fr,auto] sm:items-center">
-                    <input type="text" name="q" value="{{ $search }}" placeholder="Buscar por nombre o email"
-                           class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-indigo-400 focus:ring-indigo-400">
-                    <select name="role" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400">
-                        <option value="">Todos los roles</option>
-                        @foreach ($roles as $role)
-                            <option value="{{ $role->id }}" @selected($roleFilter == $role->id)>{{ $role->nombre_rol }}</option>
-                        @endforeach
-                    </select>
+                <form method="GET" action="{{ route('admin.roles') }}" class="grid gap-3 sm:grid-cols-[2fr,1fr,auto] sm:items-end">
+                    <div>
+                        <label class="text-xs text-zinc-400">Busqueda</label>
+                        <input type="text" name="q" value="{{ $search }}" placeholder="Buscar por nombre o email"
+                               class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-indigo-400 focus:ring-indigo-400">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400">Rol</label>
+                        <select name="role" class="mt-1 w-full appearance-none rounded-xl border border-white/15 bg-zinc-900/80 px-4 py-2.5 text-sm text-white focus:border-white/40 focus:ring-white/20">
+                            <option value="">Todos los roles</option>
+                            @foreach ($roles as $role)
+                                <option value="{{ $role->id }}" @selected($roleFilter == $role->id)>{{ $role->nombre_rol }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="flex gap-2">
                         <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500">
                             Filtrar
@@ -68,7 +78,7 @@
                 </form>
             </div>
 
-            <div class="mt-6 divide-y divide-white/5">
+            <div class="divide-y divide-white/5">
                 @forelse ($users as $user)
                     <div class="px-6 py-5">
                         <div class="grid gap-4 lg:grid-cols-[1.6fr,1fr] lg:items-start">
@@ -85,42 +95,32 @@
                                             <span class="h-2 w-2 rounded-full bg-emerald-400"></span> Verificado
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-semibold text-yellow-300">
-                                            <span class="h-2 w-2 rounded-full bg-yellow-300"></span> Revision pendiente
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                                            <span class="h-2 w-2 rounded-full bg-amber-300"></span> Revision pendiente
                                         </span>
                                     @endif
                                 </div>
-                                <div class="flex flex-wrap gap-2">
-                                    @forelse ($user->roles as $role)
-                                        <span class="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white">
-                                            {{ $role->nombre_rol }}
-                                        </span>
-                                    @empty
-                                        <span class="rounded-full border border-dashed border-white/20 px-3 py-1 text-xs text-zinc-400">
-                                            Sin rol asignado
-                                        </span>
-                                    @endforelse
+                                <div class="flex flex-wrap gap-2 text-xs">
+                                    @php $rolActual = $user->roles->first(); @endphp
+                                    <span class="rounded-full border {{ $rolActual ? 'border-white/10 text-white' : 'border-dashed border-white/20 text-zinc-400' }} px-3 py-1 font-semibold">
+                                        {{ $rolActual->nombre_rol ?? 'Sin rol asignado' }}
+                                    </span>
                                 </div>
                             </div>
 
-                            <form method="POST" action="{{ route('admin.users.roles', $user) }}" class="rounded-2xl border border-white/10 bg-zinc-950/50 p-5 shadow-inner">
+                            <form method="POST" action="{{ route('admin.users.roles', $user) }}" class="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 shadow-inner ring-1 ring-indigo-500/10">
                                 @csrf
                                 @method('PATCH')
-                                <div class="grid gap-2 sm:grid-cols-2">
+                                <label class="text-xs text-zinc-400">Selecciona un rol (exclusivo)</label>
+                                <select name="role_id" class="mt-1 w-full appearance-none rounded-xl border border-white/15 bg-zinc-900/80 px-4 py-2.5 text-sm text-white focus:border-white/40 focus:ring-white/20">
+                                    <option value="">Sin rol</option>
                                     @foreach ($roles as $role)
-                                        <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-3 py-2 text-sm text-white hover:border-indigo-400/60">
-                                            <input type="checkbox"
-                                                   name="roles[]"
-                                                   value="{{ $role->id }}"
-                                                   class="h-4 w-4 rounded border-white/30 bg-transparent text-indigo-500 focus:ring-indigo-400"
-                                                   @checked($user->roles->contains('id', $role->id))>
-                                            <span>{{ $role->nombre_rol }}</span>
-                                        </label>
+                                        <option value="{{ $role->id }}" @selected(optional($user->roles->first())->id === $role->id)>{{ $role->nombre_rol }}</option>
                                     @endforeach
-                                </div>
+                                </select>
                                 <button type="submit"
                                         class="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500">
-                                    Actualizar roles
+                                    Guardar rol
                                 </button>
                             </form>
                         </div>
