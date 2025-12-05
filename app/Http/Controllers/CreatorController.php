@@ -10,6 +10,7 @@ use App\Models\Proyecto;
 use App\Models\Recompensa;
 use App\Models\SolicitudDesembolso;
 use App\Models\Pago;
+use App\Models\VerificacionSolicitud;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -598,23 +599,73 @@ class CreatorController extends Controller
     public function updatePerfil(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'nombre_completo' => ['nullable', 'string', 'max:255'],
+            'profesion' => ['nullable', 'string', 'max:120'],
+            'experiencia' => ['nullable', 'string'],
+            'biografia' => ['nullable', 'string'],
             'info_personal' => ['nullable', 'string'],
             'redes_sociales' => ['nullable', 'array'],
-            'redes_sociales.*' => ['nullable', 'string'],
-            'estado_verificacion' => ['nullable', 'boolean'],
+            'redes_sociales.*' => ['nullable', 'url'],
+            'foto_perfil' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ]);
 
         $user = $request->user();
+        $user->nombre_completo = $validated['nombre_completo'] ?? $user->nombre_completo;
+        $user->profesion = $validated['profesion'] ?? $user->profesion;
+        $user->experiencia = $validated['experiencia'] ?? $user->experiencia;
+        $user->biografia = $validated['biografia'] ?? $user->biografia;
         $user->info_personal = $validated['info_personal'] ?? $user->info_personal;
         $user->redes_sociales = $validated['redes_sociales'] ?? $user->redes_sociales;
 
-        if (array_key_exists('estado_verificacion', $validated)) {
-            $user->estado_verificacion = $validated['estado_verificacion'];
+        if ($request->hasFile('foto_perfil')) {
+            if ($user->foto_perfil) {
+                Storage::disk('public')->delete($user->foto_perfil);
+            }
+            $user->foto_perfil = $request->file('foto_perfil')->store('perfiles', 'public');
         }
 
         $user->save();
 
         return redirect()->back()->with('status', 'Perfil actualizado.');
+    }
+
+    public function solicitarVerificacion(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'documento_frontal' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
+            'documento_reverso' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
+            'selfie' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
+            'nota' => ['nullable', 'string'],
+        ]);
+
+        $existe = VerificacionSolicitud::where('user_id', $user->id)
+            ->where('estado', 'pendiente')
+            ->exists();
+        if ($existe) {
+            return redirect()->back()->withErrors(['verificacion' => 'Ya tienes una solicitud de verificacion pendiente.'])->withInput();
+        }
+
+        $adjuntos = $this->storeKycAdjuntos($request);
+
+        VerificacionSolicitud::create([
+            'user_id' => $user->id,
+            'estado' => 'pendiente',
+            'nota' => $validated['nota'] ?? null,
+            'adjuntos' => $adjuntos,
+        ]);
+
+        return redirect()->back()->with('status', 'Solicitud de verificacion enviada a administracion.');
+    }
+
+    public function verificacion(Request $request): View
+    {
+        $pendiente = VerificacionSolicitud::where('user_id', $request->user()->id)
+            ->where('estado', 'pendiente')
+            ->exists();
+
+        return view('creator.modules.perfil-verificacion', compact('pendiente'));
     }
 
     public function storeSolicitudDesembolso(Request $request, Proyecto $proyecto): RedirectResponse
@@ -712,6 +763,22 @@ class CreatorController extends Controller
             foreach ($request->file('adjuntos') as $file) {
                 $paths[] = $file->store('pagos', 'public');
             }
+        }
+
+        return $paths;
+    }
+
+    private function storeKycAdjuntos(Request $request): array
+    {
+        $paths = [];
+        if ($request->hasFile('documento_frontal')) {
+            $paths['documento_frontal'] = $request->file('documento_frontal')->store('kyc', 'public');
+        }
+        if ($request->hasFile('documento_reverso')) {
+            $paths['documento_reverso'] = $request->file('documento_reverso')->store('kyc', 'public');
+        }
+        if ($request->hasFile('selfie')) {
+            $paths['selfie'] = $request->file('selfie')->store('kyc', 'public');
         }
 
         return $paths;

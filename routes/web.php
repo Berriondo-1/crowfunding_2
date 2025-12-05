@@ -134,6 +134,9 @@ Route::get('/creator/proveedores/{proveedor}', [\App\Http\Controllers\CreatorCon
 Route::get('/creator/perfil', [\App\Http\Controllers\CreatorController::class, 'perfil'])
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.perfil');
+Route::get('/creator/perfil/verificacion', [\App\Http\Controllers\CreatorController::class, 'verificacion'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.perfil.verificacion.form');
 
 Route::get('/creator/reportes', [\App\Http\Controllers\CreatorController::class, 'reportes'])
     ->middleware(['auth','role:CREADOR'])
@@ -170,6 +173,9 @@ Route::post('/creator/proveedores/{proveedor}/historial', [\App\Http\Controllers
 Route::patch('/creator/perfil', [\App\Http\Controllers\CreatorController::class, 'updatePerfil'])
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.perfil.update');
+Route::post('/creator/perfil/verificacion', [\App\Http\Controllers\CreatorController::class, 'solicitarVerificacion'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.perfil.verificacion');
 
 // Panel de COLABORADOR
 Route::get('/colaborador', [\App\Http\Controllers\ColaboradorController::class, 'index'])
