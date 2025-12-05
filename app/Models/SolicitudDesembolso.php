@@ -19,6 +19,8 @@ class SolicitudDesembolso extends Model
         'proveedores',
         'fecha_estimada',
         'estado',
+        'estado_admin',
+        'justificacion_admin',
         'adjuntos',
     ];
 

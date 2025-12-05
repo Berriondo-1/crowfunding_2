@@ -78,14 +78,18 @@
                                     <p class="text-xs text-zinc-300">Nota: {{ $solicitud->nota }}</p>
                                 @endif
                                 <div class="mt-2 flex flex-wrap gap-2 text-xs text-white">
-                                    @if (!empty($solicitud->adjuntos['documento_frontal'] ?? null))
-                                        <a target="_blank" href="{{ asset('storage/'.$solicitud->adjuntos['documento_frontal']) }}" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1 hover:border-indigo-400/60">Frontal</a>
+                                    @php $adj = $solicitud->adjuntos ?? []; @endphp
+                                    @if (!empty($adj['documento_frontal']))
+                                        <a target="_blank" href="{{ route('admin.verificaciones.adjunto', [$solicitud, 'documento_frontal']) }}" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1 hover:border-indigo-400/60">Frontal</a>
                                     @endif
-                                    @if (!empty($solicitud->adjuntos['documento_reverso'] ?? null))
-                                        <a target="_blank" href="{{ asset('storage/'.$solicitud->adjuntos['documento_reverso']) }}" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1 hover:border-indigo-400/60">Reverso</a>
+                                    @if (!empty($adj['documento_reverso']))
+                                        <a target="_blank" href="{{ route('admin.verificaciones.adjunto', [$solicitud, 'documento_reverso']) }}" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1 hover:border-indigo-400/60">Reverso</a>
                                     @endif
-                                    @if (!empty($solicitud->adjuntos['selfie'] ?? null))
-                                        <a target="_blank" href="{{ asset('storage/'.$solicitud->adjuntos['selfie']) }}" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1 hover:border-indigo-400/60">Selfie</a>
+                                    @if (!empty($adj['selfie']))
+                                        <a target="_blank" href="{{ route('admin.verificaciones.adjunto', [$solicitud, 'selfie']) }}" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1 hover:border-indigo-400/60">Selfie</a>
+                                    @endif
+                                    @if (empty($adj))
+                                        <span class="text-zinc-400">Archivos no disponibles</span>
                                     @endif
                                 </div>
                             </div>
