@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\Proyecto;
 use App\Models\Aportacion;
 use App\Models\User;
+use App\Models\VerificacionSolicitud;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -100,22 +101,33 @@ class AdminController extends Controller
     public function updateUserRoles(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'roles'   => ['array'],
-            'roles.*' => ['exists:roles,id'],
+            'role_id' => ['nullable', 'exists:roles,id'],
         ]);
 
-        $user->roles()->sync($validated['roles'] ?? []);
+        $roleId = $validated['role_id'] ?? null;
+        $user->roles()->sync($roleId ? [$roleId] : []);
 
         return redirect()
             ->route('admin.roles')
-            ->with('status', "Roles del usuario {$user->name} actualizados.");
+            ->with('status', "Rol del usuario {$user->name} actualizado.");
     }
 
-    public function proyectos(): View
+    public function proyectos(Request $request): View
     {
-        $proyectos = Proyecto::orderByDesc('created_at')->paginate(10);
+        $search = $request->query('q');
+        $proyectosQuery = Proyecto::with('creador')->orderByDesc('created_at');
 
-        return view('admin.modules.proyectos', compact('proyectos'));
+        if ($search) {
+            $proyectosQuery->where(function ($q) use ($search) {
+                $q->where('titulo', 'like', "%{$search}%")
+                  ->orWhere('categoria', 'like', "%{$search}%")
+                  ->orWhere('ubicacion_geografica', 'like', "%{$search}%");
+            });
+        }
+
+        $proyectos = $proyectosQuery->paginate(10)->withQueryString();
+
+        return view('admin.modules.proyectos', compact('proyectos', 'search'));
     }
 
     public function showProyecto(Proyecto $proyecto): View
@@ -171,5 +183,36 @@ class AdminController extends Controller
     public function reportes(): View
     {
         return view('admin.modules.reportes');
+    }
+
+    public function verificaciones(Request $request): View
+    {
+        $estado = $request->query('estado');
+        $query = VerificacionSolicitud::with('user')->latest();
+        if ($estado) {
+            $query->where('estado', $estado);
+        }
+        $solicitudes = $query->paginate(12)->withQueryString();
+
+        return view('admin.modules.verificaciones', compact('solicitudes', 'estado'));
+    }
+
+    public function updateVerificacion(Request $request, VerificacionSolicitud $solicitud): RedirectResponse
+    {
+        $validated = $request->validate([
+            'accion' => ['required', 'in:aprobar,rechazar'],
+            'nota' => ['nullable', 'string'],
+        ]);
+
+        $solicitud->estado = $validated['accion'] === 'aprobar' ? 'aprobada' : 'rechazada';
+        $solicitud->nota = $validated['nota'] ?? null;
+        $solicitud->save();
+
+        if ($validated['accion'] === 'aprobar') {
+            $solicitud->user->estado_verificacion = true;
+            $solicitud->user->save();
+        }
+
+        return redirect()->route('admin.verificaciones')->with('status', 'Solicitud actualizada.');
     }
 }

@@ -52,6 +52,12 @@ Route::get('/admin/proveedores', [\App\Http\Controllers\AdminController::class, 
 Route::get('/admin/reportes', [\App\Http\Controllers\AdminController::class, 'reportes'])
     ->middleware(['auth','role:ADMIN'])
     ->name('admin.reportes');
+Route::get('/admin/verificaciones', [\App\Http\Controllers\AdminController::class, 'verificaciones'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.verificaciones');
+Route::patch('/admin/verificaciones/{solicitud}', [\App\Http\Controllers\AdminController::class, 'updateVerificacion'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.verificaciones.update');
 
 // Panel de AUDITOR
 Route::get('/auditor', [\App\Http\Controllers\AuditorController::class, 'index'])
