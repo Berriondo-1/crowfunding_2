@@ -30,19 +30,21 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $user->loadMissing('roles');
 
-        // Redirección basada en rol con prioridad
+        // Redirección basada en rol con prioridad como valor por defecto
+        $defaultRedirect = url('/');
+
         if ($user->hasRole('ADMIN')) {
-            return redirect()->route('admin.dashboard');
+            $defaultRedirect = route('admin.dashboard');
         } elseif ($user->hasRole('AUDITOR')) {
-            return redirect()->route('auditor.dashboard');
+            $defaultRedirect = route('auditor.dashboard');
         } elseif ($user->hasRole('CREADOR')) {
-            return redirect()->route('creador.dashboard');
+            $defaultRedirect = route('creador.dashboard');
         } elseif ($user->hasRole('COLABORADOR')) {
-            return redirect()->route('colaborador.dashboard');
+            $defaultRedirect = route('colaborador.dashboard');
         }
 
-        // Si no tiene rol definido, va al dashboard genérico
-        return redirect()->route('dashboard');
+        // Si no hay ruta protegida previa, vuelve a la página principal
+        return redirect()->intended($defaultRedirect);
     }
 
     /**

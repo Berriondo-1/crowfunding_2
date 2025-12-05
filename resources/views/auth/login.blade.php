@@ -1,47 +1,49 @@
 <x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
-
-        <!-- Email Address -->
+    <div class="space-y-6">
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <p class="text-sm text-indigo-200 font-semibold">Bienvenido de nuevo</p>
+            <h2 class="text-3xl font-extrabold mt-1">Inicia sesión en CrowdUp</h2>
+            <p class="mt-2 text-sm text-zinc-300">Accede a tu panel para crear o apoyar campañas. Tu sesión es segura y cifrada.</p>
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+        <!-- Session Status -->
+        <x-auth-session-status class="mb-4" :status="session('status')" />
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+        <form method="POST" action="{{ route('login') }}" class="space-y-5">
+            @csrf
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+            <!-- Email Address -->
+            <div class="space-y-2">
+                <label for="email" class="text-sm font-semibold text-zinc-100">Correo electrónico</label>
+                <input id="email" class="block w-full rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-zinc-400 focus:border-indigo-400 focus:ring-indigo-400" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="correo@ejemplo.com" />
+                <x-input-error :messages="$errors->get('email')" class="mt-1" />
+            </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+            <!-- Password -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label for="password" class="text-sm font-semibold text-zinc-100">Contraseña</label>
+                    @if (Route::has('password.request'))
+                        <a class="text-xs text-indigo-200 hover:text-white" href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a>
+                    @endif
+                </div>
+                <input id="password" class="block w-full rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-zinc-400 focus:border-indigo-400 focus:ring-indigo-400" type="password" name="password" required autocomplete="current-password" placeholder="••••••••" />
+                <x-input-error :messages="$errors->get('password')" class="mt-1" />
+            </div>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+            <!-- Remember Me -->
+            <div class="flex items-center justify-between text-sm">
+                <label for="remember_me" class="inline-flex items-center gap-2 text-zinc-300">
+                    <input id="remember_me" type="checkbox" class="rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-400" name="remember">
+                    <span>Mantener sesión iniciada</span>
+                </label>
+                <a href="{{ route('register') }}" class="text-indigo-200 hover:text-white font-semibold">Crear cuenta</a>
+            </div>
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
+            <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold shadow-lg shadow-indigo-500/25 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6l6 6-6 6"/></svg>
+                Entrar
+            </button>
+        </form>
+    </div>
 </x-guest-layout>
