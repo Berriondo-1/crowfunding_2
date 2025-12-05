@@ -44,6 +44,15 @@ Route::get('/admin/auditorias', [\App\Http\Controllers\AdminController::class, '
 Route::get('/admin/finanzas', [\App\Http\Controllers\AdminController::class, 'finanzas'])
     ->middleware(['auth','role:ADMIN'])
     ->name('admin.finanzas');
+Route::get('/admin/finanzas/proyectos', [\App\Http\Controllers\AdminController::class, 'finanzasProyectos'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.finanzas.proyectos');
+Route::get('/admin/finanzas/solicitudes', [\App\Http\Controllers\AdminController::class, 'finanzasSolicitudes'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.finanzas.solicitudes');
+Route::patch('/admin/finanzas/solicitudes/{solicitud}', [\App\Http\Controllers\AdminController::class, 'updateSolicitudFondos'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.finanzas.solicitudes.update');
 
 Route::get('/admin/proveedores', [\App\Http\Controllers\AdminController::class, 'proveedores'])
     ->middleware(['auth','role:ADMIN'])
@@ -58,6 +67,9 @@ Route::get('/admin/verificaciones', [\App\Http\Controllers\AdminController::clas
 Route::patch('/admin/verificaciones/{solicitud}', [\App\Http\Controllers\AdminController::class, 'updateVerificacion'])
     ->middleware(['auth','role:ADMIN'])
     ->name('admin.verificaciones.update');
+Route::get('/admin/verificaciones/{solicitud}/archivo/{tipo}', [\App\Http\Controllers\AdminController::class, 'verificacionAdjunto'])
+    ->middleware(['auth','role:ADMIN'])
+    ->name('admin.verificaciones.adjunto');
 
 // Panel de AUDITOR
 Route::get('/auditor', [\App\Http\Controllers\AuditorController::class, 'index'])

@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\Proyecto;
 use App\Models\Aportacion;
+use App\Models\SolicitudDesembolso;
+use App\Models\Pago;
 use App\Models\User;
 use App\Models\VerificacionSolicitud;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -172,7 +175,24 @@ class AdminController extends Controller
 
     public function finanzas(): View
     {
-        return view('admin.modules.finanzas');
+        $totRecaudado = Aportacion::sum('monto');
+        $solicitudes = SolicitudDesembolso::all();
+        $liberado = $solicitudes->whereIn('estado', ['liberado', 'aprobado', 'pagado', 'gastado'])->sum('monto_solicitado');
+        $pendiente = $solicitudes->where('estado', 'pendiente')->sum('monto_solicitado');
+        $retenido = max($totRecaudado - $liberado, 0);
+        $gastado = Pago::sum('monto');
+        $disponible = max($totRecaudado - $liberado - $pendiente, 0);
+
+        $stats = [
+            'recaudado' => $totRecaudado,
+            'retenido' => $retenido,
+            'liberado' => $liberado,
+            'gastado' => $gastado,
+            'pendiente' => $pendiente,
+            'disponible' => $disponible,
+        ];
+
+        return view('admin.modules.finanzas', compact('stats'));
     }
 
     public function proveedores(): View
@@ -183,6 +203,84 @@ class AdminController extends Controller
     public function reportes(): View
     {
         return view('admin.modules.reportes');
+    }
+
+    public function finanzasProyectos(): View
+    {
+        $proyectos = Proyecto::with('creador')->get();
+
+        $recaudado = Aportacion::selectRaw('proyecto_id, SUM(monto) as total')->groupBy('proyecto_id')->pluck('total', 'proyecto_id');
+        $solicitudes = SolicitudDesembolso::selectRaw("
+            proyecto_id,
+            SUM(monto_solicitado) as total,
+            SUM(CASE WHEN estado IN ('liberado','aprobado','pagado','gastado') THEN monto_solicitado ELSE 0 END) as liberado,
+            SUM(CASE WHEN estado = 'pendiente' THEN monto_solicitado ELSE 0 END) as pendiente
+        ")->groupBy('proyecto_id')->get()->keyBy('proyecto_id');
+
+        $filas = $proyectos->map(function ($p) use ($recaudado, $solicitudes) {
+            $r = $recaudado[$p->id] ?? 0;
+            $s = $solicitudes[$p->id] ?? null;
+            $lib = $s->liberado ?? 0;
+            $pen = $s->pendiente ?? 0;
+            $retenido = max($r - $lib, 0);
+            return [
+                'proyecto' => $p,
+                'recaudado' => $r,
+                'retenido' => $retenido,
+                'liberado' => $lib,
+                'pendiente' => $pen,
+            ];
+        });
+
+        return view('admin.modules.finanzas-proyectos', compact('filas'));
+    }
+
+    public function finanzasSolicitudes(Request $request): View
+    {
+        $estado = $request->query('estado');
+        $q = $request->query('q');
+
+        $query = SolicitudDesembolso::with(['proyecto.creador'])
+            ->orderByDesc('created_at');
+
+        if ($estado) {
+            $query->where('estado', $estado);
+        }
+
+        if ($q) {
+            $query->whereHas('proyecto', function ($sub) use ($q) {
+                $sub->where('titulo', 'like', "%{$q}%");
+            });
+        }
+
+        $solicitudes = $query->paginate(12)->withQueryString();
+        $totales = [
+            'solicitado' => $query->clone()->sum('monto_solicitado'),
+            'aprobado' => SolicitudDesembolso::whereIn('estado', ['aprobado','liberado','pagado','gastado'])->sum('monto_solicitado'),
+        ];
+
+        return view('admin.modules.finanzas-solicitudes', compact('solicitudes', 'estado', 'q', 'totales'));
+    }
+
+    public function updateSolicitudFondos(Request $request, SolicitudDesembolso $solicitud): RedirectResponse
+    {
+        $validated = $request->validate([
+            'accion' => ['required', 'in:liberar,pausar,reintentar'],
+            'justificacion_admin' => ['nullable', 'string'],
+        ]);
+
+        $estado = match ($validated['accion']) {
+            'liberar' => 'liberado',
+            'pausar' => 'pausado',
+            'reintentar' => 'pendiente',
+        };
+
+        $solicitud->estado = $estado;
+        $solicitud->estado_admin = $validated['accion'];
+        $solicitud->justificacion_admin = $validated['justificacion_admin'] ?? null;
+        $solicitud->save();
+
+        return redirect()->back()->with('status', 'Solicitud actualizada manualmente.');
     }
 
     public function verificaciones(Request $request): View
@@ -214,5 +312,18 @@ class AdminController extends Controller
         }
 
         return redirect()->route('admin.verificaciones')->with('status', 'Solicitud actualizada.');
+    }
+
+    public function verificacionAdjunto(VerificacionSolicitud $solicitud, string $tipo)
+    {
+        $allowed = ['documento_frontal', 'documento_reverso', 'selfie'];
+        abort_unless(in_array($tipo, $allowed, true), 404);
+
+        $path = $solicitud->adjuntos[$tipo] ?? null;
+        if (!$path || !Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->response($path);
     }
 }
