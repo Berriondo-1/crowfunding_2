@@ -62,6 +62,9 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Forzamos a la página de inicio, sin usar intended
+        $request->session()->forget('url.intended');
+
+        return redirect('/');
     }
 }
