@@ -1,33 +1,12 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Historial de proveedor | CrowdUp Creador</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="bg-zinc-950 text-zinc-100 font-sans min-h-screen">
-    <div class="relative isolate overflow-hidden">
-        <div class="absolute -left-20 top-0 h-64 w-64 rounded-full bg-emerald-600/25 blur-3xl"></div>
-        <div class="absolute right-0 top-24 h-64 w-64 rounded-full bg-lime-500/20 blur-3xl"></div>
-    </div>
+@extends('creator.layouts.panel')
 
-    <header class="sticky top-0 z-30 border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl">
-        <div class="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-4">
-                <a href="{{ route('creador.proveedores') }}" class="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
-                    <span aria-hidden="true">&larr;</span> Volver a proveedores
-                </a>
-                <h1 class="text-lg font-semibold text-white">Historial de proveedor</h1>
-            </div>
-            <div class="flex items-center gap-3 text-xs leading-tight">
-                <span class="font-semibold text-white">{{ Auth::user()->nombre_completo ?? Auth::user()->name }}</span>
-                <span class="text-zinc-400 uppercase tracking-wide">CREADOR</span>
-            </div>
-        </div>
-    </header>
+@section('title', 'Historial de proveedor')
+@section('active', 'proveedores')
+@section('back_url', route('creador.proveedores'))
+@section('back_label', 'Volver a proveedores')
 
-    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
+@section('content')
+    <div class="px-4 sm:px-6 lg:px-8 space-y-8">
         @if (session('status'))
             <div class="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
                 {{ session('status') }}
@@ -43,7 +22,7 @@
             </div>
         @endif
 
-        <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-8 shadow-2xl ring-1 ring-emerald-500/10">
+        <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-8 shadow-2xl ring-1 ring-indigo-500/10">
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Proveedor</p>
@@ -52,10 +31,10 @@
                     <p class="text-xs text-zinc-500">Proyecto: {{ $proveedor->proyecto->titulo ?? 'Sin vincular' }}</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <a href="{{ route('creador.proveedores') }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-white hover:border-emerald-400/60 hover:text-emerald-100">
+                    <a href="{{ route('creador.proveedores') }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-white hover:border-indigo-400/60 hover:text-indigo-100">
                         Ver listado
                     </a>
-                    <a href="{{ route('creador.proveedores.edit', $proveedor) }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-white hover:border-emerald-400/60 hover:text-emerald-100">
+                    <a href="{{ route('creador.proveedores.edit', $proveedor) }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-white hover:border-indigo-400/60 hover:text-indigo-100">
                         Editar proveedor
                     </a>
                 </div>
@@ -84,20 +63,20 @@
                     <p class="font-medium text-white">#{{ $proveedor->id }}</p>
                 </div>
                 <div class="rounded-xl px-3 py-2 {{ $avgCard['bg'] }} {{ $avgCard['border'] }}">
-                    <p class="text-xs text-white/70">Promedio calificación</p>
+                    <p class="text-xs text-white/70">Promedio calificacion</p>
                     <p class="text-lg font-semibold {{ $avgCard['text'] }}">{{ $avgCard['label'] }}</p>
                 </div>
             </div>
         </section>
 
-        <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-8 shadow-2xl ring-1 ring-emerald-500/10 space-y-4">
+        <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-8 shadow-2xl ring-1 ring-indigo-500/10 space-y-4">
             <div class="flex flex-col gap-2">
                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Historial</p>
                 <h3 class="text-lg font-semibold text-white">Compras y entregas</h3>
                 <p class="text-sm text-zinc-400">Revisa el historial y registra nuevas compras sin tener que hacer scroll.</p>
             </div>
 
-            <details id="form-compra" class="overflow-hidden rounded-2xl border border-white/10 bg-white/5 ring-1 ring-emerald-500/10">
+            <details id="form-compra" class="overflow-hidden rounded-2xl border border-white/10 bg-white/5 ring-1 ring-indigo-500/10">
                 <summary class="flex cursor-pointer items-center justify-between gap-2 px-5 py-4 text-sm font-semibold text-white hover:bg-white/5">
                     Registrar nueva compra
                     <span class="text-[11px] text-zinc-400">Click para abrir / cerrar</span>
@@ -107,22 +86,22 @@
                         @csrf
                         <div class="md:col-span-2">
                             <label class="text-sm text-zinc-300">Concepto</label>
-                            <input name="concepto" required class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-emerald-400 focus:ring-emerald-400" placeholder="Compra de materiales, servicio de logistica...">
+                            <input name="concepto" required class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="Compra de materiales, servicio de logistica...">
                         </div>
                         <div>
                             <label class="text-sm text-zinc-300">Monto (USD)</label>
-                            <input type="number" step="0.01" min="0" name="monto" required class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-emerald-400 focus:ring-emerald-400" placeholder="500">
+                            <input type="number" step="0.01" min="0" name="monto" required class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="500">
                         </div>
                         <div>
                             <label class="text-sm text-zinc-300">Fecha de entrega</label>
-                            <input type="date" name="fecha_entrega" class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-emerald-400 focus:ring-emerald-400">
+                            <input type="date" name="fecha_entrega" class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400">
                         </div>
                         <div>
                             <label class="text-sm text-zinc-300">Calificacion (1-10)</label>
-                            <input type="number" name="calificacion" min="1" max="10" class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-emerald-400 focus:ring-emerald-400" placeholder="8">
+                            <input type="number" name="calificacion" min="1" max="10" class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="8">
                         </div>
                         <div class="md:col-span-2 flex justify-end">
-                            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-500">
+                            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500">
                                 Guardar en historial
                             </button>
                         </div>
@@ -132,7 +111,7 @@
 
             <div class="space-y-3">
                 @forelse ($proveedor->historiales as $item)
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col gap-2 ring-1 ring-emerald-500/10">
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col gap-2 ring-1 ring-indigo-500/10">
                         <div class="flex items-center justify-between">
                             <p class="text-sm font-semibold text-white">{{ $item->concepto }}</p>
                             @if($item->calificacion)
@@ -155,6 +134,5 @@
                 @endforelse
             </div>
         </section>
-    </main>
-</body>
-</html>
+    </div>
+@endsection

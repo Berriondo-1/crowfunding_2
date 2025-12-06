@@ -1,33 +1,10 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Recompensas | CrowdUp Creador</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="bg-zinc-950 text-zinc-100 font-sans min-h-screen">
-    <div class="relative isolate overflow-hidden">
-        <div class="absolute -left-20 top-0 h-64 w-64 rounded-full bg-indigo-600/30 blur-3xl"></div>
-        <div class="absolute right-0 top-24 h-64 w-64 rounded-full bg-fuchsia-500/20 blur-3xl"></div>
-    </div>
+@extends('creator.layouts.panel')
 
-    <header class="sticky top-0 z-30 border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl">
-        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-4">
-                <a href="{{ route('creador.dashboard') }}" class="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
-                    <span aria-hidden="true">&larr;</span> Volver al panel
-                </a>
-                <h1 class="text-lg font-semibold text-white">Recompensas</h1>
-            </div>
-            <div class="flex items-center gap-3 text-xs leading-tight">
-                <span class="font-semibold text-white">{{ Auth::user()->nombre_completo ?? Auth::user()->name }}</span>
-                <span class="text-zinc-400 uppercase tracking-wide">CREADOR</span>
-            </div>
-        </div>
-    </header>
+@section('title', 'Recompensas')
+@section('active', 'recompensas')
 
-    <main class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
+@section('content')
+    <div class="px-4 sm:px-6 lg:px-8 space-y-6">
         <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-8 shadow-2xl ring-1 ring-indigo-500/15 space-y-4">
             <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -38,7 +15,7 @@
                     <a href="{{ route('creador.recompensas.gestion', ['proyecto' => $selectedProjectId]) }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-white hover:border-indigo-400/60">
                         gestion recompensas
                     </a>
-                    <a href="{{ route('creador.recompensas.preview', ['proyecto' => $selectedProjectId]) }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-white hover-border-indigo-400/60">
+                    <a href="{{ route('creador.recompensas.preview', ['proyecto' => $selectedProjectId]) }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-white hover:border-indigo-400/60">
                         Abrir previsualizacion
                     </a>
                 </div>
@@ -117,6 +94,5 @@
                 </div>
             </div>
         </section>
-    </main>
-</body>
-</html>
+    </div>
+@endsection
