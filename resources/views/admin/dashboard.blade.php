@@ -42,151 +42,66 @@
         </div>
     </header>
 
-    <main class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div class="grid gap-8 lg:grid-cols-[280px_1fr]">
-            <aside class="space-y-6 lg:sticky lg:top-24">
-                <div class="rounded-2xl border border-white/10 bg-zinc-900/70 shadow-xl">
-                    <div class="px-4 py-3">
-                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Panel</p>
-                        <p class="text-sm text-zinc-200">Mapa rapido de secciones</p>
-                    </div>
-                    <nav class="divide-y divide-white/5">
-                        <a href="#overview" class="group flex items-center justify-between px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-200">O</span>
-                                Vision general
-                            </span>
-                            <span class="text-xs text-zinc-500 group-hover:text-indigo-200">Resumen</span>
-                        </a>
-                        <a href="#roles" class="group flex items-center justify-between px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-200">R</span>
-                                Distribucion de roles
-                            </span>
-                            <span class="text-xs text-zinc-500 group-hover:text-indigo-200">Usuarios</span>
-                        </a>
-                        <a href="#roadmap" class="group flex items-center justify-between px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-200">H</span>
-                                Hoja de ruta
-                            </span>
-                            <span class="text-xs text-zinc-500 group-hover:text-indigo-200">Proximos</span>
-                        </a>
-                    </nav>
-                </div>
-
-                <div class="rounded-2xl border border-white/10 bg-zinc-900/70 shadow-xl">
-                    <div class="px-4 py-3">
-                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Modulos</p>
-                        <p class="text-sm text-zinc-200">Accesos laterales</p>
-                    </div>
-                    <nav class="divide-y divide-white/5">
-                        <a href="{{ route('admin.roles') }}" class="flex items-center justify-between px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-200">R</span>
-                                Roles y usuarios
-                            </span>
-                            <span class="text-xs text-indigo-200">Ir</span>
-                        </a>
-                        <a href="{{ route('admin.proyectos') }}" class="flex items-center justify-between px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-200">P</span>
-                                Proyectos
-                            </span>
-                            <span class="text-xs text-indigo-200">Ir</span>
-                        </a>
-                        <a href="{{ route('admin.auditorias') }}" class="flex items-center justify-between px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-200">A</span>
-                                Auditorias y cumplimiento
-                            </span>
-                            <span class="text-xs text-indigo-200">Ir</span>
-                        </a>
-                        <a href="{{ route('admin.finanzas') }}" class="flex items-center justify-between px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-200">F</span>
-                                Finanzas
-                            </span>
-                            <span class="text-xs text-indigo-200">Ir</span>
-                        </a>
-                        <a href="{{ route('admin.proveedores') }}" class="flex items-center justify-between px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-200">V</span>
-                                Proveedores
-                            </span>
-                            <span class="text-xs text-indigo-200">Ir</span>
-                        </a>
-                    </nav>
-                </div>
+    <main class="mx-auto w-full max-w-full px-0 pt-0 pb-6">
+        <div class="grid gap-0 lg:grid-cols-[280px_1fr] lg:min-h-[calc(100vh-64px)] lg:overflow-hidden admin-shell">
+            <aside class="lg:sticky lg:top-0 admin-sidebar">
+                @include('admin.partials.modules', ['active' => 'dashboard'])
             </aside>
 
-            <div class="space-y-10">
-                <section id="overview" class="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-10 shadow-2xl">
-                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.25),_transparent_45%)]"></div>
+            <div class="space-y-10 lg:overflow-y-auto lg:h-full lg:pr-2 admin-scroll admin-main">
+                <section id="overview" class="relative overflow-hidden rounded-[22px] border border-white/15 bg-gradient-to-r from-indigo-600 to-purple-700 px-8 py-10 shadow-2xl ring-1 ring-white/15">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.2),_transparent_45%)] blur-[2px]"></div>
                     <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">Panel estrategico</p>
-                            <h1 class="mt-3 text-4xl font-black text-white">Administracion centralizada</h1>
-                            <p class="mt-4 max-w-2xl text-lg text-white/80">
-                                Accede a modulos especializados: roles, proyectos, auditorias, finanzas, proveedores y reportes. Disenado para control granular y escalabilidad.
+                            <p class="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">Panel estrategico</p>
+                            <h1 class="mt-2 text-3xl font-extrabold tracking-wide text-white">Administracion centralizada</h1>
+                            <p class="mt-3 max-w-2xl text-base text-white/75">
+                                Accede a modulos especializados: roles, proyectos, auditorias, finanzas y proveedores. Disenado para control granular y escalabilidad.
                             </p>
                         </div>
-                        <div class="grid gap-4 rounded-2xl bg-white/10 p-6 text-white backdrop-blur">
-                            <div>
-                                <p class="text-xs uppercase tracking-[0.3em] text-white/70">Usuarios totales</p>
-                                <p class="text-3xl font-bold">{{ $totalUsers }}</p>
+                        <div class="grid gap-3 rounded-2xl bg-white/10 p-6 text-white backdrop-blur-sm shadow-inner">
+                            <div class="flex items-center gap-3">
+                                <div>
+                                    <p class="text-xs uppercase tracking-[0.35em] text-white/70">Usuarios totales</p>
+                                    <p class="text-4xl font-extrabold">{{ $totalUsers }}</p>
+                                </div>
                             </div>
-                            <div class="border-t border-white/10 pt-4">
-                                <p class="text-xs uppercase tracking-[0.3em] text-white/70">Identidad verificada</p>
-                                <p class="text-3xl font-bold">{{ $verifiedUsers }}</p>
+                            <div class="border-t border-white/10 pt-3 flex items-center gap-3">
+                                <div>
+                                    <p class="text-xs uppercase tracking-[0.35em] text-white/70">Identidad verificada</p>
+                                    <p class="text-4xl font-extrabold">{{ $verifiedUsers }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <section id="roles" class="grid gap-6 lg:grid-cols-3">
+                <section id="roles" class="grid gap-4 lg:grid-cols-4">
+                    @php
+                        $icons = [
+                            'ADMIN' => ['border' => 'border-sky-400'],
+                            'AUDITOR' => ['border' => 'border-purple-400'],
+                            'CREADOR' => ['border' => 'border-emerald-400'],
+                            'COLABORADOR' => ['border' => 'border-amber-300'],
+                        ];
+                    @endphp
                     @foreach ($roleStats as $roleStat)
-                        <article class="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-xl">
-                            <p class="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-400">{{ $roleStat->nombre_rol }}</p>
-                            <p class="mt-3 text-4xl font-black text-white">{{ $roleStat->users_count }}</p>
-                            <p class="mt-2 text-sm text-zinc-400">Usuarios activos con este rol</p>
+                        @php
+                            $meta = $icons[strtoupper($roleStat->nombre_rol)] ?? ['border' => 'border-indigo-400'];
+                        @endphp
+                        <article class="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-xl transition hover:scale-[1.01] hover:border-white/20 {{ 'border-t-4 ' . $meta['border'] }}">
+                            <p class="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-zinc-300">{{ $roleStat->nombre_rol }}</p>
+                            <p class="mt-3 text-5xl font-extrabold text-white leading-tight">{{ $roleStat->users_count }}</p>
+                            <p class="mt-1 text-sm text-zinc-400">Usuarios activos con este rol</p>
                         </article>
                     @endforeach
                 </section>
 
-                <section id="roadmap">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">Hoja de ruta</p>
-                            <h3 class="mt-2 text-2xl font-bold text-white">Proximas capacidades para administracion</h3>
-                        </div>
-                    </div>
-                    <div class="mt-6 grid gap-6 md:grid-cols-3">
-                        <article class="rounded-2xl border border-white/10 bg-zinc-900/80 p-6">
-                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-300">Prioridad 1</p>
-                            <h4 class="mt-2 text-lg font-semibold text-white">Moderacion de usuarios</h4>
-                            <p class="mt-3 text-sm text-zinc-400">
-                                KYC mejorado, seguimiento de verificaciones (HU1, HU3) y control granular de permisos (HU2).
-                            </p>
-                        </article>
-                        <article class="rounded-2xl border border-white/10 bg-zinc-900/80 p-6">
-                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-fuchsia-300">Prioridad 2</p>
-                            <h4 class="mt-2 text-lg font-semibold text-white">Supervision financiera</h4>
-                            <p class="mt-3 text-sm text-zinc-400">
-                                Metricas de proyectos, auditorias y liberacion de fondos (epicas 4, 5 y 8).
-                            </p>
-                        </article>
-                        <article class="rounded-2xl border border-white/10 bg-zinc-900/80 p-6">
-                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Prioridad 3</p>
-                            <h4 class="mt-2 text-lg font-semibold text-white">Cumplimiento &amp; reportes</h4>
-                            <p class="mt-3 text-sm text-zinc-400">
-                                Herramientas de AML/KYC, reportes fiscales y monitoreo de proveedores (epicas 9 y 10).
-                            </p>
-                        </article>
-                    </div>
-                </section>
             </div>
         </div>
     </main>
 </body>
 </html>
+
+
+
