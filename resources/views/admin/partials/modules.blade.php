@@ -3,11 +3,11 @@
     $accentPalette = [
         'dashboard' => ['from' => '#6366f1', 'to' => '#8b5cf6', 'soft' => 'rgba(99,102,241,0.12)', 'ring' => 'rgba(99,102,241,0.55)'],
         'roles' => ['from' => '#06b6d4', 'to' => '#6366f1', 'soft' => 'rgba(6,182,212,0.12)', 'ring' => 'rgba(6,182,212,0.55)'],
-        'proyectos' => ['from' => '#7c3aed', 'to' => '#a855f7', 'soft' => 'rgba(124,58,237,0.12)', 'ring' => 'rgba(168,85,247,0.55)'],
+        'proyectos' => ['from' => '#06b6d4', 'to' => '#6366f1', 'soft' => 'rgba(6,182,212,0.12)', 'ring' => 'rgba(6,182,212,0.55)'],
         'auditorias' => ['from' => '#a855f7', 'to' => '#6366f1', 'soft' => 'rgba(168,85,247,0.12)', 'ring' => 'rgba(99,102,241,0.55)'],
-        'finanzas' => ['from' => '#22c55e', 'to' => '#0ea5e9', 'soft' => 'rgba(34,197,94,0.12)', 'ring' => 'rgba(14,165,233,0.55)'],
-        'proveedores' => ['from' => '#f59e0b', 'to' => '#f97316', 'soft' => 'rgba(245,158,11,0.14)', 'ring' => 'rgba(249,115,22,0.55)'],
-        'verificaciones' => ['from' => '#f43f5e', 'to' => '#a855f7', 'soft' => 'rgba(244,63,94,0.12)', 'ring' => 'rgba(168,85,247,0.5)'],
+        'finanzas' => ['from' => '#06b6d4', 'to' => '#6366f1', 'soft' => 'rgba(6,182,212,0.12)', 'ring' => 'rgba(6,182,212,0.55)'],
+        'proveedores' => ['from' => '#06b6d4', 'to' => '#6366f1', 'soft' => 'rgba(6,182,212,0.12)', 'ring' => 'rgba(6,182,212,0.55)'],
+        'verificaciones' => ['from' => '#06b6d4', 'to' => '#6366f1', 'soft' => 'rgba(6,182,212,0.12)', 'ring' => 'rgba(6,182,212,0.55)'],
     ];
     $accent = $accentPalette[$accentKey] ?? $accentPalette['dashboard'];
 @endphp
@@ -291,6 +291,5 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="uppercase tracking-[0.3em] text-[11px] text-indigo-200">ADMIN</p>
     </div>
 </div>
-
 
 
