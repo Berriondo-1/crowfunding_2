@@ -27,8 +27,14 @@
         </div>
     </header>
 
-    <main class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
-        <section class="rounded-3xl border border-white/10 bg-zinc-900/75 shadow-2xl ring-1 ring-indigo-500/10">
+    <main class="mx-auto w-full max-w-full px-0 pt-0 pb-6">
+        <div class="grid gap-0 lg:grid-cols-[280px_1fr] lg:min-h-[calc(100vh-64px)] lg:overflow-hidden admin-shell">
+            <aside class="lg:sticky lg:top-0 admin-sidebar">
+                @include('admin.partials.modules', ['active' => 'roles'])
+            </aside>
+
+            <div class="space-y-8 lg:overflow-y-auto lg:h-full lg:pr-2 admin-scroll admin-main">
+                <section class="rounded-3xl border border-white/10 bg-zinc-900/75 shadow-2xl ring-1 ring-indigo-500/10">
             <div class="border-b border-white/5 px-6 py-6 space-y-4">
                 <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div class="space-y-1">
@@ -133,7 +139,17 @@
             <div class="border-t border-white/5 px-6 py-4 text-right text-xs text-zinc-400">
                 {{ $users->links() }}
             </div>
-        </section>
+                </section>
+            </div>
+        </div>
     </main>
 </body>
 </html>
+
+
+
+
+
+
+
+

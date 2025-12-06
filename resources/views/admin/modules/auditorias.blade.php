@@ -27,17 +27,33 @@
         </div>
     </header>
 
-    <main class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-8 shadow-2xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Compliance</p>
-            <h2 class="mt-2 text-2xl font-bold text-white">Flujos de auditoría</h2>
-            <p class="mt-2 text-sm text-zinc-400">
-                Espacio para revisar comprobantes, reportes sospechosos y aprobaciones de desembolsos (HU16-HU19, HU34).
-            </p>
-            <div class="mt-6 rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-sm text-zinc-300">
-                Próximamente: bandeja de auditoría, colas de revisión y panel AML/KYC.
+    <main class="mx-auto w-full max-w-full px-0 pt-0 pb-6">
+        <div class="grid gap-0 lg:grid-cols-[280px_1fr] lg:min-h-[calc(100vh-64px)] lg:overflow-hidden admin-shell">
+            <aside class="lg:sticky lg:top-0 admin-sidebar">
+                @include('admin.partials.modules', ['active' => 'auditorias'])
+            </aside>
+
+            <div class="space-y-8 lg:overflow-y-auto lg:h-full lg:pr-2 admin-scroll admin-main">
+                <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-8 shadow-2xl">
+                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Compliance</p>
+                    <h2 class="mt-2 text-2xl font-bold text-white">Flujos de auditoría</h2>
+                    <p class="mt-2 text-sm text-zinc-400">
+                        Espacio para revisar comprobantes, reportes sospechosos y aprobaciones de desembolsos (HU16-HU19, HU34).
+                    </p>
+                    <div class="mt-6 rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-sm text-zinc-300">
+                        Próximamente: bandeja de auditoría, colas de revisión y panel AML/KYC.
+                    </div>
+                </section>
             </div>
-        </section>
+        </div>
     </main>
 </body>
 </html>
+
+
+
+
+
+
+
+
