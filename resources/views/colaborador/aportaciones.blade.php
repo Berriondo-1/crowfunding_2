@@ -1,49 +1,65 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div>
-            <p class="text-xs tracking-widest text-slate-400 uppercase">
-                Módulo de aportaciones
-            </p>
-            <h2 class="font-semibold text-xl text-white leading-tight">
-                Historial de aportaciones
-            </h2>
-        </div>
-    </x-slot>
+@extends('colaborador.layouts.panel')
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+@section('title', 'Tus aportaciones')
 
-            <section class="bg-slate-900/80 rounded-3xl border border-slate-800 p-6 shadow">
-                @if($aportaciones->isEmpty())
-                    <p class="text-sm text-slate-300">
-                        Aún no has realizado ninguna aportación.
-                    </p>
-                @else
-                    <ul class="divide-y divide-slate-800">
+@section('content')
+<section class="p-8 space-y-6">
+    <header class="mb-4">
+        <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
+            Aportaciones
+        </p>
+        <h1 class="text-2xl font-bold text-white mt-2">
+            Historial de aportaciones
+        </h1>
+        <p class="text-sm text-zinc-400 mt-1">
+            Revisa el detalle de cada aporte que has realizado.
+        </p>
+    </header>
+
+    <div class="rounded-3xl border border-white/10 bg-zinc-900/70 shadow-xl p-6">
+        @if($aportaciones->count())
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-left text-white">
+                    <thead class="border-b border-white/10 text-zinc-300">
+                        <tr>
+                            <th class="py-3 pr-4">Fecha</th>
+                            <th class="py-3 pr-4">Proyecto</th>
+                            <th class="py-3 pr-4">Monto</th>
+                            <th class="py-3 pr-4">Estado de pago</th>
+                            <th class="py-3 pr-4">ID transacción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
                         @foreach($aportaciones as $aporte)
-                            <li class="py-4 flex items-center justify-between">
-                                <div>
-                                    <p class="font-medium text-slate-100">
-                                        {{ optional($aporte->proyecto)->titulo ?? 'Proyecto eliminado' }}
-                                    </p>
-                                    <p class="text-xs text-slate-400">
-                                        {{ $aporte->fecha_aportacion?->format('d/m/Y H:i') }}
-                                    </p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-emerald-400">
-                                        ${{ number_format($aporte->monto, 2) }}
-                                    </p>
-                                    <p class="text-xs text-slate-400">
-                                        Estado: {{ ucfirst($aporte->estado_pago) }}
-                                    </p>
-                                </div>
-                            </li>
+                            <tr class="hover:bg-white/5">
+                                <td class="py-3 pr-4">
+                                    {{ optional($aporte->fecha_aportacion)->format('d/m/Y') ?? $aporte->created_at->format('d/m/Y') }}
+                                </td>
+                                <td class="py-3 pr-4 font-semibold">
+                                    {{ optional($aporte->proyecto)->titulo ?? 'Proyecto eliminado' }}
+                                </td>
+                                <td class="py-3 pr-4">
+                                    ${{ number_format($aporte->monto, 2) }}
+                                </td>
+                                <td class="py-3 pr-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs
+                                           bg-emerald-600/20 text-emerald-300 border border-emerald-500/40">
+                                        {{ strtoupper($aporte->estado_pago ?? 'CONFIRMADO') }}
+                                    </span>
+                                </td>
+                                <td class="py-3 pr-4 text-xs text-zinc-300">
+                                    {{ $aporte->id_transaccion_pago ?? '-' }}
+                                </td>
+                            </tr>
                         @endforeach
-                    </ul>
-                @endif
-            </section>
-
-        </div>
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <p class="text-sm text-zinc-300">
+                Aún no has realizado aportaciones.
+            </p>
+        @endif
     </div>
-</x-app-layout>
+</section>
+@endsection

@@ -1,57 +1,63 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div>
-            <p class="text-xs tracking-widest text-slate-400 uppercase">
-                Módulo de proyectos
-            </p>
-            <h2 class="font-semibold text-xl text-white leading-tight">
-                Proyectos que estás apoyando
-            </h2>
-        </div>
-    </x-slot>
+@extends('colaborador.layouts.panel')
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+@section('title', 'Proyectos que apoyas')
 
-            <section class="bg-slate-900/80 rounded-3xl border border-slate-800 p-6 shadow">
-                @if($aportaciones->isEmpty())
-                    <p class="text-sm text-slate-300">
-                        Todavía no has realizado aportaciones. Explora proyectos y apoya tu primera campaña.
-                    </p>
-                @else
-                    <table class="min-w-full text-sm text-left text-slate-200">
-                        <thead class="text-xs uppercase text-slate-400 border-b border-slate-700">
+@section('content')
+<section class="p-8 space-y-6">
+
+    <header class="mb-4">
+        <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
+            Proyectos
+        </p>
+        <h1 class="text-2xl font-bold text-white mt-2">
+            Proyectos que estás apoyando
+        </h1>
+        <p class="text-sm text-zinc-400 mt-1">
+            Resumen rápido de los proyectos asociados a tus aportaciones.
+        </p>
+    </header>
+
+    <div class="rounded-3xl border border-white/10 bg-zinc-900/70 shadow-xl p-6">
+        @if(isset($proyectosAportados) && $proyectosAportados->count())
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-left text-white">
+                    <thead class="border-b border-white/10 text-zinc-300">
                         <tr>
-                            <th class="py-3">Proyecto</th>
-                            <th class="py-3">Monto aportado</th>
-                            <th class="py-3">Fecha</th>
-                            <th class="py-3">Estado de pago</th>
+                            <th class="py-3 pr-4">Proyecto</th>
+                            <th class="py-3 pr-4">Meta</th>
+                            <th class="py-3 pr-4">Recaudado</th>
+                            <th class="py-3 pr-4">Estado</th>
                         </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($aportaciones as $aporte)
-                            <tr class="border-b border-slate-800">
-                                <td class="py-3">
-                                    {{ optional($aporte->proyecto)->titulo ?? 'Proyecto eliminado' }}
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        @foreach($proyectosAportados as $proyecto)
+                            <tr class="hover:bg-white/5">
+                                <td class="py-3 pr-4 font-semibold">
+                                    {{ $proyecto->titulo ?? 'Proyecto sin título' }}
                                 </td>
-                                <td class="py-3">
-                                    ${{ number_format($aporte->monto, 2) }}
+                                <td class="py-3 pr-4">
+                                    ${{ number_format($proyecto->meta_financiacion ?? 0, 2) }}
                                 </td>
-                                <td class="py-3">
-                                    {{ $aporte->fecha_aportacion?->format('d/m/Y') }}
+                                <td class="py-3 pr-4">
+                                    ${{ number_format($proyecto->monto_recaudado ?? 0, 2) }}
                                 </td>
-                                <td class="py-3">
-                                    <span class="px-2 py-1 rounded-full text-xs bg-slate-800">
-                                        {{ ucfirst($aporte->estado_pago) }}
+                                <td class="py-3 pr-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs
+                                           bg-indigo-600/20 text-indigo-300 border border-indigo-500/40">
+                                        {{ strtoupper($proyecto->estado ?? 'EN PROGRESO') }}
                                     </span>
                                 </td>
                             </tr>
                         @endforeach
-                        </tbody>
-                    </table>
-                @endif
-            </section>
-
-        </div>
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <p class="text-sm text-zinc-300">
+                Todavía no has realizado aportaciones. Explora proyectos y apoya tu primera campaña.
+            </p>
+        @endif
     </div>
-</x-app-layout>
+</section>
+@endsection
+

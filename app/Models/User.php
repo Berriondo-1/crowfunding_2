@@ -67,7 +67,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Aportacion::class, 'colaborador_id');
     }
-
+    
     /**
      * Helper para chequear rol
      */

@@ -20,17 +20,15 @@ class Aportacion extends Model
         'id_transaccion_pago',
     ];
 
-    protected $casts = [
-        'fecha_aportacion' => 'datetime',
-    ];
-
+    // Colaborador que hizo la aportación
     public function colaborador()
     {
         return $this->belongsTo(User::class, 'colaborador_id');
     }
 
+    // Proyecto al que se aportó
     public function proyecto()
     {
-        return $this->belongsTo(Proyecto::class);
+        return $this->belongsTo(Proyecto::class, 'proyecto_id');
     }
 }
