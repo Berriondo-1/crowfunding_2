@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\ColaboradroController;
+use App\Http\Controllers\ColaboradorController;
 use App\Http\Controllers\AuditorController;
 use App\Http\Controllers\CreatorController;
 use App\Http\Controllers\ProfileController;
@@ -211,13 +211,22 @@ Route::post('/creator/perfil/verificacion', [\App\Http\Controllers\CreatorContro
     ->name('creador.perfil.verificacion');
 
 // Panel de COLABORADOR
-Route::get('/colaborador', [\App\Http\Controllers\ColaboradorController::class, 'index'])
-    ->middleware(['auth','role:COLABORADOR'])
-    ->name('colaborador.dashboard');
+Route::middleware(['auth', 'role:COLABORADOR'])->group(function () {
+    Route::get('/colaborador', [ColaboradorController::class, 'index'])
+        ->name('colaborador.dashboard');
+    Route::get('/', [ColaboradorController::class, 'index'])
+        ->name('colaborador.dashboard');
 
-Route::post('/colaborador/logout', [\App\Http\Controllers\ColaboradorController::class, 'logout'])
-    ->middleware(['auth','role:COLABORADOR'])
-    ->name('colaborador.logout');
+    Route::get('/proyectos', [ColaboradorController::class, 'proyectos'])
+        ->name('colaborador.proyectos');
+
+    Route::get('/aportaciones', [ColaboradorController::class, 'aportaciones'])
+        ->name('colaborador.aportaciones');
+
+    Route::get('/reportes', [ColaboradorController::class, 'reportes'])
+        ->name('colaborador.reportes');
+});
+
 
 // Dashboard general (fallback)
 Route::get('/dashboard', function () {
