@@ -6,6 +6,8 @@ use App\Models\Aportacion;
 use App\Models\Pago;
 use App\Models\Proyecto;
 use App\Models\ProyectoCategoria;
+use App\Models\Proveedor;
+use App\Models\ReporteSospechoso;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -145,24 +147,54 @@ class ColaboradorController extends Controller
     /**
      * Reportes / resumen
      */
-    public function reportes(): View
+    public function reportes(Request $request): View
     {
-        $colaboradorId = Auth::id();
+        $q = $request->query('q');
 
-        $aportaciones = Aportacion::with('proyecto')
-            ->where('colaborador_id', $colaboradorId)
+        $proyectos = Proyecto::when($q, function ($query) use ($q) {
+                $query->where('titulo', 'like', "%{$q}%");
+            })
+            ->orderBy('titulo')
+            ->limit(15)
             ->get();
 
-        $totalAportado   = $aportaciones->sum('monto');
-        $numProyectos    = $aportaciones->groupBy('proyecto_id')->count();
-        $numAportaciones = $aportaciones->count();
+        return view('colaborador.reportes', compact('proyectos', 'q'));
+    }
 
-        return view('colaborador.reportes', compact(
-            'aportaciones',
-            'totalAportado',
-            'numProyectos',
-            'numAportaciones'
-        ));
+    public function storeReporteSospechoso(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'proyecto_id' => ['required', 'exists:proyectos,id'],
+            'motivo' => ['required', 'string', 'max:4000'],
+            'evidencia' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
+        ]);
+
+        $paths = [];
+        if ($request->hasFile('evidencia')) {
+            $paths[] = $request->file('evidencia')->store('reportes-sospechosos', 'public');
+        }
+
+        ReporteSospechoso::create([
+            'colaborador_id' => Auth::id(),
+            'proyecto_id' => $validated['proyecto_id'],
+            'motivo' => $validated['motivo'],
+            'evidencias' => $paths,
+            'estado' => 'pendiente',
+        ]);
+
+        return redirect()
+            ->route('colaborador.reportes')
+            ->with('status', 'Reporte enviado a revisión. Un auditor lo analizará.');
+    }
+
+    public function misReportes(): View
+    {
+        $reportes = ReporteSospechoso::with('proyecto')
+            ->where('colaborador_id', Auth::id())
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('colaborador.reportes-mios', compact('reportes'));
     }
 
     /**
@@ -200,19 +232,65 @@ class ColaboradorController extends Controller
         return view('colaborador.proyectos-resumen', compact('proyecto', 'aporteUsuario'));
     }
 
-    public function proveedoresProyecto(Proyecto $proyecto): View
+    public function proveedoresProyecto(Request $request, Proyecto $proyecto): View
     {
+        $search = $request->query('q');
+        $promedio = $request->query('promedio');
+
         $proyecto->load(['creador', 'proveedores.historiales']);
-        $proveedores = $proyecto->proveedores;
+        $proveedores = $proyecto->proveedores
+            ->map(function ($prov) {
+                $prov->calificacion_promedio = $prov->historiales->avg('calificacion');
+                return $prov;
+            })
+            ->filter(function ($prov) use ($search) {
+                if (!$search) {
+                    return true;
+                }
+                $needle = mb_strtolower($search);
+                $haystack = mb_strtolower(($prov->nombre_proveedor ?? '') . ' ' . ($prov->especialidad ?? '') . ' ' . ($prov->info_contacto ?? ''));
+                return str_contains($haystack, $needle);
+            })
+            ->filter(function ($prov) use ($promedio) {
+                $avg = $prov->calificacion_promedio;
+                return match ($promedio) {
+                    '4' => $avg !== null && $avg >= 4,
+                    '3' => $avg !== null && $avg >= 3 && $avg < 4,
+                    '2' => $avg !== null && $avg < 3,
+                    'sin' => $avg === null,
+                    default => true,
+                };
+            })
+            ->values();
 
         $pagos = Pago::with('solicitud')
             ->whereHas('solicitud', fn($q) => $q->where('proyecto_id', $proyecto->id))
             ->whereIn('proveedor_id', $proveedores->pluck('id'))
             ->orderByDesc('fecha_pago')
             ->get()
-            ->groupBy('proveedor_id');
+            ->groupBy('proveedor_id')
+            ->map(function ($collection, $provId) use ($proveedores) {
+                $prov = $proveedores->firstWhere('id', $provId);
+                if (!$prov) {
+                    return $collection;
+                }
+                return $collection->map(function ($pago) use ($prov) {
+                    $match = $prov->historiales->first(function ($hist) use ($pago) {
+                        return ($hist->concepto ?? '') === ($pago->concepto ?? '')
+                            && (float)($hist->monto ?? 0) === (float)($pago->monto ?? 0);
+                    });
+                    $pago->calificacion_pago = $match->calificacion ?? null;
+                    return $pago;
+                });
+            });
 
-        return view('colaborador.proyectos-proveedores', compact('proyecto', 'proveedores', 'pagos'));
+        return view('colaborador.proyectos-proveedores', compact(
+            'proyecto',
+            'proveedores',
+            'pagos',
+            'search',
+            'promedio'
+        ));
     }
 
     public function reportePagosProyecto(Proyecto $proyecto): View
@@ -221,6 +299,38 @@ class ColaboradorController extends Controller
         $aportaciones = Aportacion::where('proyecto_id', $proyecto->id)->get();
         $total = $aportaciones->sum('monto');
         return view('colaborador.proyectos-reporte', compact('proyecto', 'aportaciones', 'total'));
+    }
+
+    public function proveedorDetalle(Proyecto $proyecto, Proveedor $proveedor): View
+    {
+        abort_unless($proveedor->proyecto_id === $proyecto->id, 404);
+
+        $proveedor->load('historiales');
+
+        $pagos = Pago::with('solicitud')
+            ->where('proveedor_id', $proveedor->id)
+            ->whereHas('solicitud', fn($q) => $q->where('proyecto_id', $proyecto->id))
+            ->orderByDesc('fecha_pago')
+            ->get()
+            ->map(function ($pago) use ($proveedor) {
+                $match = $proveedor->historiales->first(function ($hist) use ($pago) {
+                    return ($hist->concepto ?? '') === ($pago->concepto ?? '')
+                        && (float)($hist->monto ?? 0) === (float)($pago->monto ?? 0);
+                });
+                $pago->calificacion_pago = $match->calificacion ?? null;
+                return $pago;
+            });
+
+        $totalProveedor = $pagos->sum('monto');
+        $calificacionPromedio = $proveedor->historiales->avg('calificacion');
+
+        return view('colaborador.proveedores-detalle', compact(
+            'proyecto',
+            'proveedor',
+            'pagos',
+            'totalProveedor',
+            'calificacionPromedio'
+        ));
     }
 
     /**

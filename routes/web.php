@@ -292,6 +292,10 @@ Route::middleware(['auth', 'role:COLABORADOR'])->group(function () {
 
     Route::get('/colaborador/reportes', [ColaboradorController::class, 'reportes'])
         ->name('colaborador.reportes');
+    Route::post('/colaborador/reportes', [ColaboradorController::class, 'storeReporteSospechoso'])
+        ->name('colaborador.reportes.store');
+    Route::get('/colaborador/reportes/mis', [ColaboradorController::class, 'misReportes'])
+        ->name('colaborador.reportes.mis');
     
     Route::get('/colaborador/proyectos/{proyecto}', [ColaboradorController::class, 'showProyecto'])
         ->name('colaborador.proyectos.show');
@@ -303,6 +307,8 @@ Route::middleware(['auth', 'role:COLABORADOR'])->group(function () {
         ->name('colaborador.proyectos.resumen');
     Route::get('/colaborador/proyectos/{proyecto}/proveedores', [ColaboradorController::class, 'proveedoresProyecto'])
         ->name('colaborador.proyectos.proveedores');
+    Route::get('/colaborador/proyectos/{proyecto}/proveedores/{proveedor}', [ColaboradorController::class, 'proveedorDetalle'])
+        ->name('colaborador.proyectos.proveedores.show');
     Route::get('/colaborador/proyectos/{proyecto}/reporte-pagos', [ColaboradorController::class, 'reportePagosProyecto'])
         ->name('colaborador.proyectos.reporte');
 });

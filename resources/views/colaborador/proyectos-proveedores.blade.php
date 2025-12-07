@@ -13,88 +13,114 @@
         <p class="text-sm text-zinc-400">Listado de proveedores para el proyecto {{ $proyecto->titulo }}.</p>
     </header>
 
+    <form method="GET" action="{{ route('colaborador.proyectos.proveedores', $proyecto) }}" class="grid gap-3 sm:grid-cols-[2fr,1fr,auto] sm:items-center">
+        <input type="text" name="q" value="{{ $search }}" placeholder="Buscar por nombre, especialidad o contacto"
+               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-indigo-400 focus:ring-indigo-400">
+        <select name="promedio" class="w-full rounded-xl border border-white/15 bg-zinc-950/80 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400">
+            <option value="" style="background-color:#0b0b12;color:#fff;">Todos los promedios</option>
+            <option value="4" @selected($promedio === '4') style="background-color:#0b0b12;color:#fff;">4.0 o mas</option>
+            <option value="3" @selected($promedio === '3') style="background-color:#0b0b12;color:#fff;">3.0 a 3.9</option>
+            <option value="2" @selected($promedio === '2') style="background-color:#0b0b12;color:#fff;">0 a 2.9</option>
+            <option value="sin" @selected($promedio === 'sin') style="background-color:#0b0b12;color:#fff;">Sin calificacion</option>
+        </select>
+        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500">
+            Filtrar
+        </button>
+    </form>
+
     <div class="rounded-3xl border border-white/10 bg-zinc-900/80 shadow-[0_24px_60px_rgba(0,0,0,0.45)] p-6 space-y-4">
         @if ($proveedores->isEmpty())
-            <p class="text-sm text-zinc-300">Aún no hay proveedores registrados para este proyecto.</p>
+            <p class="text-sm text-zinc-300">Aun no hay proveedores registrados para este proyecto.</p>
         @else
-            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div class="grid gap-6 grid-cols-1">
                 @foreach ($proveedores as $prov)
                     @php
                         $pagosProveedor = $pagos[$prov->id] ?? collect();
-                        $previewAdjunto = $pagosProveedor->first()?->adjuntos[0] ?? null;
-                        $previewImg = $previewAdjunto ? asset('storage/'.$previewAdjunto) : 'https://images.unsplash.com/photo-1471879832106-c7ab9e0cee23?auto=format&fit=crop&w=700&q=80';
+                        $totalProveedor = $pagosProveedor->sum('monto');
+                        $calificacionPromedio = $prov->historiales->avg('calificacion');
+                        $filledStars = (int) floor($calificacionPromedio ?? 0);
+                        $ultimoPago = $pagosProveedor->max('fecha_pago');
+                        $ultimoPagoFecha = $ultimoPago
+                            ? optional($ultimoPago instanceof \Illuminate\Support\Carbon ? $ultimoPago : \Illuminate\Support\Carbon::parse($ultimoPago))->format('d/m/Y')
+                            : null;
                     @endphp
-                    <article class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden text-sm text-white shadow-[0_22px_55px_rgba(0,0,0,0.45)] flex flex-col">
-                        <div class="relative h-32 w-full overflow-hidden">
-                            <img src="{{ $previewImg }}" alt="Comprobante" class="h-full w-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-                            <div class="absolute top-2 left-2 inline-flex items-center rounded-full bg-black/50 px-3 py-1 text-[11px] font-semibold text-white border border-white/15">
-                                {{ $prov->especialidad ?? 'Proveedor' }}
+                    <article class="rounded-2xl border border-white/10 bg-white/5 text-sm text-white shadow-[0_18px_40px_rgba(0,0,0,0.35)] flex flex-col">
+                        <div class="flex flex-wrap items-center gap-4 lg:gap-6 lg:flex-nowrap lg:justify-start border-b border-white/10 bg-black/20 px-4 py-3">
+                            <div class="space-y-1">
+                                <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500 flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
+                                    </svg>
+                                    Proveedor
+                                </p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-lg font-semibold">{{ $prov->nombre_proveedor ?? 'Proveedor' }}</h3>
+                                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-emerald-500/15 text-emerald-200 border border-emerald-400/40">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
+                                        Proveedor activo
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap gap-2 text-[12px] text-zinc-300">
+                                    <span class="inline-flex items-center gap-1 rounded-lg bg-black/20 px-2.5 py-1 border border-white/5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-3-3h-2" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20H4v-2a3 3 0 013-3h2" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4a4 4 0 116 0M5 8a4 4 0 104 4H5a4 4 0 01-4-4z" />
+                                        </svg>
+                                        Especialidad: {{ $prov->especialidad ?? 'No especificada' }}
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 rounded-lg bg-black/20 px-2.5 py-1 border border-white/5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A2 2 0 013 15.382V5.618a2 2 0 011.105-1.789L9 1l5 2.829L19.895 3.83A2 2 0 0121 5.618v9.764a2 2 0 01-1.105 1.789L14 20l-5-2.829z" />
+                                        </svg>
+                                        Tipo: {{ $prov->tipo ?? 'No especificado' }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-zinc-500">Contacto: {{ $prov->info_contacto ?? 'No disponible' }}</p>
+                            </div>
+                            <div class="text-right space-y-3 lg:ml-auto">
+                                <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                                    <p class="text-[11px] uppercase tracking-[0.18em] text-zinc-400">Promedio</p>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <div class="flex items-center gap-0.5">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $i <= $filledStars ? 'text-amber-300' : 'text-zinc-600' }}" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                                </svg>
+                                            @endfor
+                                        </div>
+                                        <p class="text-base font-semibold text-white">{{ $calificacionPromedio ? number_format($calificacionPromedio, 1) : 'N/D' }}</p>
+                                    </div>
+                                </div>
+                                <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                                    <p class="text-[11px] uppercase tracking-[0.2em] text-zinc-400">Total pagado</p>
+                                    <p class="text-2xl font-black text-emerald-200">USD {{ number_format($totalProveedor, 2) }}</p>
+                                    <p class="text-[11px] text-zinc-400">En {{ $pagosProveedor->count() }} pagos</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="p-4 space-y-3 flex-1 flex flex-col">
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <p class="text-xs uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
-                                        </svg>
-                                        Proveedor
-                                    </p>
-                                    <h3 class="text-lg font-semibold">{{ $prov->nombre_proveedor ?? 'Proveedor' }}</h3>
-                                    <p class="text-[11px] text-zinc-400">{{ $prov->info_contacto ?? 'Contacto no disponible' }}</p>
-                                </div>
+                        <div class="p-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2 text-sm text-white">
+                                <span class="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 17l-5 3 1.9-5.9L4 9.5l6-.3L12 4l2 5.2 6 .3-4.9 4.6L17 20z" />
+                                    </svg>
+                                    Promedio: {{ $calificacionPromedio ? number_format($calificacionPromedio, 1) : 'N/D' }}
+                                </span>
+                                <span class="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-zinc-200">
+                                    Pagos: {{ $pagosProveedor->count() }}
+                                </span>
+                                <span class="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-zinc-200">
+                                    Ultimo pago: {{ $ultimoPagoFecha ?? 'Sin pagos' }}
+                                </span>
                             </div>
-
-                            @if ($pagosProveedor->isNotEmpty())
-                                <div class="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2">
-                                    <p class="text-[11px] uppercase tracking-[0.2em] text-zinc-400">Pagos al proveedor</p>
-                                    @foreach ($pagosProveedor as $pago)
-                                        <div class="rounded-lg border border-white/10 bg-white/5 p-3 text-[12px] space-y-1">
-                                            <p class="font-semibold text-white">{{ $pago->concepto ?? 'Pago' }}</p>
-                                            <p class="text-emerald-200 font-semibold">USD {{ number_format($pago->monto ?? 0, 2) }}</p>
-                                            <p class="text-zinc-400">Fecha: {{ optional($pago->fecha_pago)->format('d/m/Y') ?? 'N/D' }}</p>
-                                            @if (!empty($pago->adjuntos))
-                                                <div class="flex flex-wrap gap-2 pt-1">
-                                                    @foreach ($pago->adjuntos as $idx => $archivo)
-                                                        <a href="{{ asset('storage/'.$archivo) }}" target="_blank" class="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[11px] hover:border-indigo-400/60">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 11h10M7 15h6" />
-                                                            </svg>
-                                                            Factura {{ $idx + 1 }}
-                                                        </a>
-                                                    @endforeach
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <div class="rounded-xl border border-white/10 bg-black/20 p-3 text-[12px] text-zinc-300">
-                                    Sin pagos registrados para este proveedor.
-                                </div>
-                            @endif
-
-                            @if ($prov->historiales?->count())
-                                <details class="rounded-xl border border-white/10 bg-black/30 p-3">
-                                    <summary class="text-xs font-semibold text-indigo-200 cursor-pointer flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        Ver historial
-                                    </summary>
-                                    <div class="mt-2 space-y-2 text-[11px] text-zinc-300">
-                                        @foreach ($prov->historiales as $hist)
-                                            <div class="rounded-lg border border-white/10 bg-white/5 p-2">
-                                                <p class="font-semibold text-white">{{ $hist->titulo ?? 'Actualización' }}</p>
-                                                <p>{{ $hist->descripcion ?? 'Sin descripción' }}</p>
-                                                <p class="text-zinc-500">{{ optional($hist->created_at)->format('d/m/Y') }}</p>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </details>
-                            @endif
+                            <a href="{{ route('colaborador.proyectos.proveedores.show', [$proyecto, $prov]) }}" class="inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-[12px] font-semibold text-white hover:bg-indigo-400 transition-colors">
+                                Ver historial
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
                         </div>
                     </article>
                 @endforeach

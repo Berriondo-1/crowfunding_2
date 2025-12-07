@@ -8,6 +8,7 @@ use App\Models\Pago;
 use App\Models\VerificacionSolicitud;
 use App\Models\Proyecto;
 use App\Models\ActualizacionProyecto;
+use App\Models\ReporteSospechoso;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -208,11 +209,12 @@ class AuditorController extends Controller
 
     public function reportes()
     {
-        // No hay modelo de reportes de colaboradores; se envía colección vacía para datos reales.
-        $reportesColab = collect();
+        $reportesColab = ReporteSospechoso::with(['proyecto', 'colaborador'])
+            ->orderByDesc('created_at')
+            ->get();
+
         return view('auditor.modules.reportes', compact('reportesColab'));
     }
-
     public function hitos()
     {
         $q = request()->query('q');

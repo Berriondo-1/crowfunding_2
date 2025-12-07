@@ -328,11 +328,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
         </a>
 
-        {{-- Reportes --}}
+        {{-- Reportar sospecha --}}
         <a href="{{ route('colaborador.reportes') }}" class="{{ $linkClass }} {{ $active === 'reportes' ? $activeClass : '' }}">
             <span class="flex items-center gap-2">
                 <span class="inline-flex h-2 w-2 rounded-full bg-sky-300"></span>
-                Reportes
+                Reportar sospecha
             </span>
             
         </a>
