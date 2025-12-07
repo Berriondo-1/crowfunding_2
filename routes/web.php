@@ -6,11 +6,20 @@ use App\Http\Controllers\ColaboradorController;
 use App\Http\Controllers\AuditorController;
 use App\Http\Controllers\CreatorController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ContactoController;
 
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Páginas estáticas públicas
+Route::view('/nosotros', 'nosotros')->name('nosotros');
+Route::view('/prensa', 'prensa')->name('prensa');
+
+// Contacto: GET = muestra formulario, POST = procesa envío
+Route::get('/contacto', [ContactoController::class, 'form'])->name('contacto');
+Route::post('/contacto', [ContactoController::class, 'enviar'])->name('contacto.enviar');
 
 // Panel de ADMIN
 Route::get('/admin', [\App\Http\Controllers\AdminController::class, 'index'])
