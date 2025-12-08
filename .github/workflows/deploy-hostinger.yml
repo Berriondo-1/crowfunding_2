@@ -114,15 +114,16 @@ jobs:
             ./ deploy/
 
       - name: Deploy to Hostinger (rsync over SSH)
-        uses: burnett01/rsync-deployments@v1.0.2
-        with:
-          switches: -az --delete
-          path: deploy/
-          remote_path: ${{ env.DEPLOY_PATH }}
-          remote_host: ${{ secrets.H_HOST }}
-          remote_user: ${{ secrets.H_USER }}
-          remote_key: ${{ secrets.H_SSH_KEY }}
-          remote_port: ${{ secrets.H_PORT }}
+        uses: easingthemes/ssh-deploy@v5.0.3
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.H_SSH_KEY }}
+          ARGS: "-az --delete"
+          SOURCE: "deploy/"
+          REMOTE_HOST: ${{ secrets.H_HOST }}
+          REMOTE_USER: ${{ secrets.H_USER }}
+          REMOTE_PORT: ${{ secrets.H_PORT }}
+          TARGET: ${{ env.DEPLOY_PATH }}
+          SSH_ARGS: "-o StrictHostKeyChecking=no"
 
       - name: Post-deploy tasks (cache and migrations)
         uses: appleboy/ssh-action@v1.2.0
