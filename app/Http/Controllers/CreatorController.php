@@ -24,6 +24,7 @@ class CreatorController extends Controller
     public function index(): View
     {
         $userId = auth()->id();
+        $user = auth()->user();
 
         $proyectos = Proyecto::where('creador_id', $userId)->get();
 
@@ -39,16 +40,100 @@ class CreatorController extends Controller
             ->distinct('colaborador_id')
             ->count('colaborador_id');
 
-        $metrics = [
-            'proyectos'      => $proyectos->count(),
-            'montoRecaudado' => $recaudado,
-            'colaboradores'  => $colaboradores,
-            'avance'         => $avance,
-            'metaTotal'      => $metaTotal,
-            'gastos'         => 0, // sin modelo de gastos implementado
+        $solicitudes = SolicitudDesembolso::with('proyecto')
+            ->whereHas('proyecto', fn($q) => $q->where('creador_id', $userId))
+            ->get();
+
+        $fondosRetenidos = $solicitudes->where('estado', 'pendiente')->sum('monto_solicitado');
+        $fondosLiberados = $solicitudes->whereIn('estado', ['liberado', 'pagado', 'gastado'])->sum('monto_solicitado');
+        $fondosGastados = $solicitudes->where('estado', 'gastado')->sum('monto_solicitado');
+        $totalSolicitado = $solicitudes->sum('monto_solicitado');
+        $transparencia = $totalSolicitado ? round(($fondosLiberados / $totalSolicitado) * 100) : 0;
+        $pendientesPorJustificar = max($totalSolicitado - $fondosLiberados, 0);
+        $fondosDisponibles = max($fondosLiberados - $fondosGastados, 0);
+
+        $lastAportacion = Aportacion::whereHas('proyecto', fn($q) => $q->where('creador_id', $userId))
+            ->latest()
+            ->first();
+        $lastSolicitud = $solicitudes->sortByDesc('created_at')->first();
+        $lastPago = Pago::whereHas('solicitud.proyecto', fn($q) => $q->where('creador_id', $userId))
+            ->latest('fecha_pago')
+            ->first();
+
+        $movimientos = [];
+        if ($lastAportacion) {
+            $movimientos[] = [
+                'titulo' => 'Último aporte',
+                'detalle' => '$' . number_format($lastAportacion->monto, 2),
+                'meta' => optional($lastAportacion->created_at)->format('d/m/Y H:i'),
+            ];
+        }
+        if ($lastSolicitud) {
+            $movimientos[] = [
+                'titulo' => 'Última solicitud',
+                'detalle' => '$' . number_format($lastSolicitud->monto_solicitado, 2),
+                'meta' => ucfirst($lastSolicitud->estado ?? 'pendiente'),
+            ];
+        }
+        if ($lastPago) {
+            $movimientos[] = [
+                'titulo' => 'Último gasto aprobado',
+                'detalle' => '$' . number_format($lastPago->monto, 2),
+                'meta' => ucfirst($lastPago->estado ?? 'pendiente'),
+            ];
+        }
+
+        $pendientesComprobantes = Pago::whereHas('solicitud.proyecto', fn($q) => $q->where('creador_id', $userId))
+            ->where('estado_auditoria', 'pendiente')
+            ->count();
+        $pendientesVerificacion = VerificacionSolicitud::where('user_id', $userId)
+            ->where('estado', 'pendiente')
+            ->count();
+
+        $accionesPendientes = [
+            ['label' => 'Subir comprobantes pendientes', 'count' => $pendientesComprobantes],
+            ['label' => 'Responder comentarios del auditor', 'count' => $pendientesVerificacion],
+            ['label' => 'Publicar actualización de proyecto', 'count' => $proyectos->count() ? 1 : 0],
+            ['label' => 'Configurar recompensas nuevas', 'count' => 0],
         ];
 
-        return view('creator.dashboard', compact('metrics'));
+        $perfilSteps = [
+            'Datos personales' => !empty($user->info_personal),
+            'Documentos' => !empty($user->foto_perfil),
+            'Redes sociales' => !empty($user->redes_sociales),
+            'Verificación' => (bool) $user->estado_verificacion,
+        ];
+        $perfilCompletado = collect($perfilSteps)->every(fn($value) => $value);
+        $perfilCompletadoCount = collect($perfilSteps)->filter()->count();
+
+        $heroCta = $proyectos->isEmpty()
+            ? ['label' => 'Crear campaña', 'route' => route('creador.proyectos.create')]
+            : ['label' => 'Ver mis proyectos', 'route' => route('creador.proyectos')];
+
+        $metrics = [
+            'proyectos'          => $proyectos->count(),
+            'montoRecaudado'     => $recaudado,
+            'colaboradores'      => $colaboradores,
+            'avance'             => $avance,
+            'metaTotal'          => $metaTotal,
+            'fondosRetenidos'    => $fondosRetenidos,
+            'fondosLiberados'    => $fondosLiberados,
+            'fondosGastados'     => $fondosGastados,
+            'fondosDisponibles'  => $fondosDisponibles,
+            'pendientesPorJustificar' => $pendientesPorJustificar,
+            'transparencia'      => $transparencia,
+            'gastos'             => $fondosGastados,
+        ];
+
+        return view('creator.dashboard', compact(
+            'metrics',
+            'heroCta',
+            'movimientos',
+            'accionesPendientes',
+            'perfilSteps',
+            'perfilCompletado',
+            'perfilCompletadoCount'
+        ));
     }
 
     public function proyectos(Request $request): View
@@ -65,6 +150,7 @@ class CreatorController extends Controller
                 });
             })
             ->when($estado, fn($q) => $q->where('estado', $estado))
+            ->withCount('aportaciones')
             ->latest()
             ->get();
 
@@ -210,6 +296,7 @@ class CreatorController extends Controller
     {
         $proyectos = Proyecto::where('creador_id', auth()->id())->get();
         $selectedProjectId = $request->query('proyecto') ?? $proyectos->first()?->id;
+        $selectedProject = $proyectos->firstWhere('id', $selectedProjectId);
 
         $actualizaciones = collect();
         if ($selectedProjectId) {
@@ -219,7 +306,21 @@ class CreatorController extends Controller
                 ->get();
         }
 
-        return view('creator.modules.avances', compact('proyectos', 'selectedProjectId', 'actualizaciones'));
+        $projectContext = null;
+        if ($selectedProject) {
+            $meta = $selectedProject->meta_financiacion ?? 0;
+            $recaudado = $selectedProject->monto_recaudado ?? 0;
+            $progress = $meta > 0 ? round(($recaudado / $meta) * 100) : 0;
+            $projectContext = [
+                'estado' => $selectedProject->estado ?? 'borrador',
+                'recaudado' => $recaudado,
+                'meta' => $meta,
+                'progreso' => $progress,
+                'hito' => $selectedProject->fecha_limite?->format('d/m/Y') ?? 'Próximo hito por definir',
+            ];
+        }
+
+        return view('creator.modules.avances', compact('proyectos', 'selectedProjectId', 'actualizaciones', 'selectedProject', 'projectContext'));
     }
 
     public function fondos(Request $request): View
@@ -247,7 +348,37 @@ class CreatorController extends Controller
             $finanzas = $this->calcularFinanzasProyecto($selectedProjectId);
         }
 
-        return view('creator.modules.fondos', compact('proyectos', 'selectedProjectId', 'solicitudes', 'finanzas'));
+        $selectedProject = $proyectos->firstWhere('id', $selectedProjectId);
+        $projectSummary = null;
+        if ($selectedProject) {
+            $meta = $selectedProject->meta_financiacion ?? 0;
+            $recaudado = max(
+                Aportacion::where('proyecto_id', $selectedProject->id)->sum('monto'),
+                $selectedProject->monto_recaudado ?? 0
+            );
+            $progress = $meta > 0 ? min(100, round(($recaudado / $meta) * 100)) : 0;
+            $projectSummary = [
+                'estado' => $selectedProject->estado ?? 'borrador',
+                'meta' => $meta,
+                'recaudado' => $recaudado,
+                'progress' => $progress,
+                'hito' => $selectedProject->fecha_limite?->format('d/m/Y') ?? ($selectedProject->modelo_financiamento ? 'Modelo ' . $selectedProject->modelo_financiamento : 'Sin hito fijo'),
+            ];
+        }
+
+        $mensajePendientes = $solicitudes->where('estado', 'pendiente')->count();
+        $sinFondos = $finanzas['disponible'] <= 0;
+
+        return view('creator.modules.fondos', compact(
+            'proyectos',
+            'selectedProjectId',
+            'selectedProject',
+            'solicitudes',
+            'finanzas',
+            'projectSummary',
+            'mensajePendientes',
+            'sinFondos'
+        ));
     }
 
     public function fondosHistorial(Request $request): View

@@ -37,11 +37,11 @@
                         $avg = $prov->calificacion_promedio;
                         $avgBadge = $avg === null
                             ? ['bg' => 'bg-zinc-500/15 text-zinc-200 border border-white/10', 'label' => 'Sin calificacion']
-                            : ($avg < 5
-                                ? ['bg' => 'bg-red-500/15 text-red-100 border border-red-500/20', 'label' => number_format($avg, 1) . '/10']
-                                : ($avg == 5
-                                    ? ['bg' => 'bg-amber-400/15 text-amber-100 border border-amber-400/25', 'label' => number_format($avg, 1) . '/10']
-                                    : ['bg' => 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30', 'label' => number_format($avg, 1) . '/10']));
+                            : ($avg < 3
+                                ? ['bg' => 'bg-red-500/15 text-red-100 border border-red-500/20', 'label' => number_format($avg, 1) . '/5']
+                                : ($avg < 4
+                                    ? ['bg' => 'bg-amber-400/15 text-amber-100 border border-amber-400/25', 'label' => number_format($avg, 1) . '/5']
+                                    : ['bg' => 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30', 'label' => number_format($avg, 1) . '/5']));
                     @endphp
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>

@@ -164,6 +164,9 @@ Route::get('/creator/proyectos/crear', [\App\Http\Controllers\CreatorController:
 Route::get('/creator/proyectos/{proyecto}/editar', [\App\Http\Controllers\CreatorController::class, 'proyectosEditar'])
     ->middleware(['auth','role:CREADOR'])
     ->name('creador.proyectos.edit');
+Route::get('/creator/comprobantes', [\App\Http\Controllers\CreatorController::class, 'reportes'])
+    ->middleware(['auth','role:CREADOR'])
+    ->name('creador.comprobantes');
 
 Route::get('/creator/recompensas', [\App\Http\Controllers\CreatorController::class, 'recompensas'])
     ->middleware(['auth','role:CREADOR'])
