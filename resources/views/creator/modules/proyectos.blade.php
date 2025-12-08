@@ -25,9 +25,16 @@
                     <p class="text-sm text-zinc-400">Revisión rápida de estado y acceso directo para crear nuevas campañas.</p>
                 </div>
                 <div>
-                    <a href="{{ route('creador.proyectos.create') }}" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 hover:bg-emerald-400">
-                        Crear nuevo proyecto
-                    </a>
+                    @php $isVerified = Auth::user()->estado_verificacion; @endphp
+                    @if ($isVerified)
+                        <a href="{{ route('creador.proyectos.create') }}" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 hover:bg-emerald-400">
+                            Crear nuevo proyecto
+                        </a>
+                    @else
+                        <div class="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                            Tu cuenta debe estar verificada para crear proyectos. <a class="underline text-white" href="{{ route('creador.perfil.verificacion.form') }}">Verifica ahora</a>
+                        </div>
+                    @endif
                 </div>
             </div>
             <form method="GET" action="{{ route('creador.proyectos') }}" class="mt-4 grid gap-3 sm:grid-cols-[1.4fr,0.8fr,0.8fr,auto] sm:items-end">

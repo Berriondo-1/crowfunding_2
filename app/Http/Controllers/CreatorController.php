@@ -159,6 +159,8 @@ class CreatorController extends Controller
 
     public function proyectosCrear(): View
     {
+        $this->ensureCreatorVerified();
+
         $categorias = ProyectoCategoria::orderBy('nombre')->get();
         $modelos = ProyectoModeloFinanciamiento::orderBy('nombre')->get();
 
@@ -509,6 +511,8 @@ class CreatorController extends Controller
 
     public function storeProyecto(Request $request): RedirectResponse
     {
+        $this->ensureCreatorVerified();
+
         $validated = $request->validate([
             'titulo' => ['required', 'string', 'max:255'],
             'descripcion_proyecto' => ['nullable', 'string'],
@@ -917,6 +921,13 @@ class CreatorController extends Controller
     {
         $proyecto = Proyecto::find($proyectoId);
         abort_unless($proyecto && $proyecto->creador_id === $userId, 403);
+    }
+
+    private function ensureCreatorVerified(): void
+    {
+        if (!auth()->user()->estado_verificacion) {
+            abort(403, 'Tu cuenta debe estar verificada para crear nuevos proyectos.');
+        }
     }
 
     private function storeAdjuntos(Request $request): array

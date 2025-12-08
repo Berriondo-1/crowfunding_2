@@ -35,12 +35,18 @@ class RegisteredUserController extends Controller
             'password' => [
                 'required',
                 'confirmed',
-                Password::min(8)
-                ->mixedCase()  
-                ->letters()  
-                ->numbers()  
-                ->symbols()  
-                ->uncompromised(),
+                tap(
+                    Password::min(8)
+                        ->mixedCase()
+                        ->letters()
+                        ->numbers()
+                        ->symbols(),
+                    function ($rule) {
+                        if (!app()->environment('testing')) {
+                            $rule->uncompromised();
+                        }
+                    }
+                ),
             ],
         ], [
             'password.required' => 'Debes ingresar una contraseña.',

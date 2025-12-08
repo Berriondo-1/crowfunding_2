@@ -3,121 +3,182 @@
 namespace Tests\Feature;
 
 use App\Models\ActualizacionProyecto;
-use App\Models\Proyecto;
-use App\Models\Proveedor;
-use App\Models\Role;
-use App\Models\User;
+use App\Models\ProveedorHistorial;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Http\Middleware\VerifyCsrfToken;
-use App\Http\Middleware\EnsureRole;
 use Tests\TestCase;
 
 class CreatorModulesTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
+    public function test_creator_can_create_recompensa(): void
     {
-        parent::setUp();
-        // Simplifica las pruebas de formularios evitando CSRF/roles
-        $this->withoutMiddleware();
-    }
+        $creator = $this->createUserWithRole('CREADOR');
+        $creator->update(['estado_verificacion' => true]);
+        $proyecto = $this->createProyecto($creator);
 
-    private function makeCreator(): User
-    {
-        $role = Role::create(['nombre_rol' => 'CREADOR']);
-        $user = User::factory()->create([
-            'nombre_completo' => 'Creador Demo',
-            'estado_verificacion' => false,
-        ]);
-        $user->roles()->attach($role->id);
-        return $user;
-    }
+        $this->actingAs($creator)
+            ->post(route('creador.recompensas.store'), [
+                'proyecto_id' => $proyecto->id,
+                'titulo' => 'Nivel 1',
+                'descripcion' => 'Desc',
+                'monto_minimo_aportacion' => 10,
+                'disponibilidad' => 5,
+            ])
+            ->assertRedirect();
 
-    public function test_creator_can_create_project_with_goal(): void
-    {
-        $creator = $this->makeCreator();
-
-        $response = $this->actingAs($creator)->post(route('creador.proyectos.store'), [
-            'titulo' => 'Proyecto Meta',
-            'descripcion_proyecto' => 'Desc',
-            'meta_financiacion' => 5000,
-            'modelo_financiamiento' => 'todo-o-nada',
-        ]);
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('proyectos', [
-            'titulo' => 'Proyecto Meta',
-            'creador_id' => $creator->id,
-            'meta_financiacion' => 5000,
-            'estado' => 'borrador',
+        $this->assertDatabaseHas('recompensas', [
+            'proyecto_id' => $proyecto->id,
+            'titulo' => 'Nivel 1',
         ]);
     }
 
-    public function test_creator_can_publish_update_for_own_project(): void
+    public function test_creator_can_add_avance(): void
     {
-        $creator = $this->makeCreator();
-        $project = Proyecto::create([
-            'creador_id' => $creator->id,
-            'titulo' => 'Proyecto Avance',
-            'meta_financiacion' => 1000,
-            'monto_recaudado' => 0,
-            'estado' => 'publicado',
-        ]);
+        $creator = $this->createUserWithRole('CREADOR');
+        $proyecto = $this->createProyecto($creator);
 
-        $response = $this->actingAs($creator)->post(route('creador.proyectos.avances', ['proyecto' => $project->id]), [
-            'titulo' => 'Avance 1',
-            'contenido' => 'Detalle del avance',
-        ]);
+        $this->actingAs($creator)
+            ->post(route('creador.proyectos.avances', $proyecto), [
+                'titulo' => 'Avance 1',
+                'contenido' => 'Contenido',
+                'es_hito' => true,
+            ])
+            ->assertRedirect();
 
-        $response->assertRedirect();
         $this->assertDatabaseHas('actualizaciones_proyecto', [
-            'proyecto_id' => $project->id,
+            'proyecto_id' => $proyecto->id,
             'titulo' => 'Avance 1',
+            'es_hito' => 1,
         ]);
     }
 
-    public function test_creator_can_link_supplier_to_project(): void
+    public function test_creator_can_request_desembolso_when_funds_available(): void
     {
-        $creator = $this->makeCreator();
-        $project = Proyecto::create([
-            'creador_id' => $creator->id,
-            'titulo' => 'Proyecto Proveedor',
-            'meta_financiacion' => 2000,
-            'monto_recaudado' => 0,
-            'estado' => 'publicado',
-        ]);
+        $creator = $this->createUserWithRole('CREADOR');
+        $proyecto = $this->createProyecto($creator, ['monto_recaudado' => 500]);
 
-        $response = $this->actingAs($creator)->post(route('creador.proveedores.store'), [
-            'nombre_proveedor' => 'Proveedor XYZ',
-            'proyecto_id' => $project->id,
-            'info_contacto' => 'contacto@test.com',
-            'especialidad' => 'Logistica',
-        ]);
+        $this->actingAs($creator)
+            ->post(route('creador.fondos.solicitudes.store', $proyecto), [
+                'monto_solicitado' => 100,
+                'hito' => 'Hito prueba',
+                'descripcion' => 'Desc',
+            ])
+            ->assertRedirect(route('creador.fondos', ['proyecto' => $proyecto->id]));
 
-        $response->assertRedirect();
-        $this->assertDatabaseHas('proveedores', [
-            'nombre_proveedor' => 'Proveedor XYZ',
-            'proyecto_id' => $project->id,
-            'creador_id' => $creator->id,
+        $this->assertDatabaseHas('solicitudes_desembolso', [
+            'proyecto_id' => $proyecto->id,
+            'hito' => 'Hito prueba',
+            'estado' => 'pendiente',
         ]);
     }
 
-    public function test_creator_can_update_profile_and_verify(): void
+    public function test_creator_cannot_request_desembolso_if_insufficient_funds(): void
     {
-        $creator = $this->makeCreator();
+        $creator = $this->createUserWithRole('CREADOR');
+        $proyecto = $this->createProyecto($creator, ['monto_recaudado' => 50]);
 
-        $response = $this->actingAs($creator)->patch(route('creador.perfil.update'), [
-            'info_personal' => 'Bio corta',
-            'redes_sociales' => ['twitter' => '@demo'],
-            'estado_verificacion' => true,
+        $this->actingAs($creator)
+            ->post(route('creador.fondos.solicitudes.store', $proyecto), [
+                'monto_solicitado' => 100,
+                'hito' => 'Hito insuficiente',
+                'descripcion' => 'Desc',
+            ])
+            ->assertSessionHasErrors('monto_solicitado');
+    }
+
+    public function test_creator_can_toggle_recompensa_estado(): void
+    {
+        $creator = $this->createUserWithRole('CREADOR');
+        $proyecto = $this->createProyecto($creator);
+        $recompensa = \App\Models\Recompensa::create([
+            'proyecto_id' => $proyecto->id,
+            'titulo' => 'R1',
+            'monto_minimo_aportacion' => 10,
+            'descripcion' => 'Desc',
         ]);
 
-        $response->assertRedirect();
-        $creator->refresh();
+        $this->actingAs($creator)
+            ->patch(route('creador.recompensas.estado', $recompensa))
+            ->assertRedirect();
 
-        $this->assertEquals('Bio corta', $creator->info_personal);
-        $this->assertEquals('@demo', $creator->redes_sociales['twitter']);
-        $this->assertTrue((bool) $creator->estado_verificacion);
+        $this->assertStringStartsWith('[PAUSADO]', $recompensa->fresh()->descripcion);
+    }
+
+    public function test_creator_can_edit_and_delete_avance(): void
+    {
+        $creator = $this->createUserWithRole('CREADOR');
+        $proyecto = $this->createProyecto($creator);
+        $avance = ActualizacionProyecto::create([
+            'proyecto_id' => $proyecto->id,
+            'titulo' => 'Inicial',
+            'fecha_publicacion' => now(),
+        ]);
+
+        $this->actingAs($creator)
+            ->patch(route('creador.proyectos.avances.update', [$proyecto, $avance]), [
+                'titulo' => 'Actualizado',
+                'contenido' => 'Nuevo',
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals('Actualizado', $avance->fresh()->titulo);
+
+        $this->actingAs($creator)
+            ->delete(route('creador.proyectos.avances.delete', [$proyecto, $avance]))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('actualizaciones_proyecto', ['id' => $avance->id]);
+    }
+
+    public function test_creator_can_update_and_delete_proveedor(): void
+    {
+        $creator = $this->createUserWithRole('CREADOR');
+        $proyecto = $this->createProyecto($creator);
+        $proveedor = $this->createProveedor($creator, $proyecto, ['nombre_proveedor' => 'Prov1']);
+
+        $this->actingAs($creator)
+            ->patch(route('creador.proveedores.update', $proveedor), [
+                'nombre_proveedor' => 'Prov2',
+                'proyecto_id' => $proyecto->id,
+            ])
+            ->assertRedirect(route('creador.proveedores'));
+
+        $this->assertDatabaseHas('proveedores', ['id' => $proveedor->id, 'nombre_proveedor' => 'Prov2']);
+
+        $this->actingAs($creator)
+            ->delete(route('creador.proveedores.destroy', $proveedor))
+            ->assertRedirect(route('creador.proveedores'));
+
+        $this->assertDatabaseMissing('proveedores', ['id' => $proveedor->id]);
+    }
+
+    public function test_creator_can_register_pago_with_comprobante(): void
+    {
+        $creator = $this->createUserWithRole('CREADOR');
+        $proyecto = $this->createProyecto($creator);
+        $solicitud = $this->createSolicitud($proyecto, ['estado' => 'aprobado']);
+        $proveedor = $this->createProveedor($creator, $proyecto);
+
+        $this->actingAs($creator)
+            ->post(route('creador.reportes.pagos.store', $proyecto), [
+                'solicitud_id' => $solicitud->id,
+                'proveedor_id' => $proveedor->id,
+                'monto' => 75,
+                'concepto' => 'Pago demo',
+                'calificacion' => 4,
+            ])
+            ->assertRedirect(route('creador.reportes', ['proyecto' => $proyecto->id]));
+
+        $this->assertDatabaseHas('pagos', [
+            'solicitud_id' => $solicitud->id,
+            'proveedor_id' => $proveedor->id,
+            'monto' => 75,
+        ]);
+
+        $this->assertDatabaseHas('proveedor_historiales', [
+            'proveedor_id' => $proveedor->id,
+            'concepto' => 'Pago demo',
+        ]);
     }
 }

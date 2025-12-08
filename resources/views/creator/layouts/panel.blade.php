@@ -36,6 +36,16 @@
             <div class="flex items-center gap-3 text-xs leading-tight">
                 <span class="font-semibold text-white">{{ Auth::user()->nombre_completo ?? Auth::user()->name }}</span>
                 <span class="text-zinc-400 uppercase tracking-wide">CREADOR</span>
+                <div class="flex flex-col">
+                    <a href="{{ route('logout') }}"
+                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                       class="inline-flex items-center rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
+                        Salir
+                    </a>
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+                        @csrf
+                    </form>
+                </div>
             </div>
         </div>
     </header>
