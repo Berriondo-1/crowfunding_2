@@ -312,6 +312,10 @@ Route::middleware(['auth', 'role:COLABORADOR'])->group(function () {
         ->name('colaborador.proyectos.aportar');
     Route::post('/colaborador/proyectos/{proyecto}/aportar', [ColaboradorController::class, 'storeAportacion'])
         ->name('colaborador.proyectos.aportar.store');
+    Route::get('/colaborador/pagos/paypal/success', [ColaboradorController::class, 'paypalSuccess'])
+        ->name('colaborador.paypal.success');
+    Route::get('/colaborador/pagos/paypal/cancel', [ColaboradorController::class, 'paypalCancel'])
+        ->name('colaborador.paypal.cancel');
     Route::get('/colaborador/proyectos/{proyecto}/resumen', [ColaboradorController::class, 'resumenProyecto'])
         ->name('colaborador.proyectos.resumen');
     Route::get('/colaborador/proyectos/{proyecto}/proveedores', [ColaboradorController::class, 'proveedoresProyecto'])

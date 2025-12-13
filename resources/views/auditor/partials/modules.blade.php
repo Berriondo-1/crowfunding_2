@@ -55,6 +55,7 @@
         background: #0b0c12;
         min-height: calc(100vh - 64px);
         overflow: hidden;
+        position: relative;
     }
     .admin-shell .admin-sidebar {
         width: 100%;
@@ -67,6 +68,7 @@
         top: 64px;
         height: calc(100vh - 64px);
         overflow-y: auto;
+        z-index: 20;
     }
     .admin-shell.collapsed .admin-sidebar {
         transform: translateX(-110%);
@@ -186,6 +188,9 @@
         overflow-y: auto;
         padding-right: 0.5rem;
     }
+    .admin-sidebar-backdrop {
+        display: none;
+    }
     .admin-auditor-content {
         border-radius: 32px;
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -202,37 +207,99 @@
         pointer-events: none;
         background: radial-gradient(circle at 20% 0%, rgba(168, 85, 247, 0.05), transparent 45%);
     }
+    @media (max-width: 1023px) {
+        .admin-shell {
+            min-height: auto;
+        }
+        .admin-shell .admin-sidebar {
+            position: fixed;
+            left: 0;
+            top: 64px;
+            height: calc(100vh - 64px);
+            max-width: min(320px, calc(100% - 48px));
+            width: 100%;
+            transform: translateX(-110%);
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        .admin-shell:not(.collapsed) .admin-sidebar {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .admin-main {
+            height: auto;
+            min-height: auto;
+            overflow: visible;
+            padding: 1rem;
+        }
+        .admin-sidebar-backdrop {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 200ms ease;
+            z-index: 10;
+        }
+        .admin-shell:not(.collapsed) .admin-sidebar-backdrop {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .admin-toggle-floating {
+            display: inline-flex;
+        }
+    }
     @media (min-width: 1024px) {
         .admin-main {
             padding-right: 0.75rem;
+        }
+        .admin-sidebar-backdrop {
+            display: none !important;
         }
     }
 </style>
 @once
 <script>
-document.addEventListener('click', (event) => {
-    const btn = event.target.closest('[data-admin-toggle]');
-    if (!btn) return;
-    const shell = btn.closest('.admin-shell') || document.querySelector('.admin-shell');
-    if (shell) {
+(() => {
+    const syncSidebar = (shell) => {
+        const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+        if (isDesktop) {
+            shell.classList.remove('collapsed');
+        } else {
+            shell.classList.add('collapsed');
+        }
+        document.body.classList.toggle('admin-sidebar-collapsed', shell.classList.contains('collapsed'));
+    };
+
+    document.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-admin-toggle]');
+        if (!btn) return;
+        const shell = btn.closest('.admin-shell') || document.querySelector('.admin-shell');
+        if (!shell) return;
         shell.classList.toggle('collapsed');
         document.body.classList.toggle('admin-sidebar-collapsed', shell.classList.contains('collapsed'));
-    }
-});
+    });
 
-document.addEventListener('DOMContentLoaded', () => {
-    const shell = document.querySelector('.admin-shell');
-    if (!shell) return;
-    if (!document.querySelector('.admin-toggle-floating')) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.setAttribute('data-admin-toggle', 'true');
-        btn.className = 'admin-toggle-floating';
-        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg><span>Menu</span>`;
-        document.body.appendChild(btn);
-    }
-    document.body.classList.toggle('admin-sidebar-collapsed', shell.classList.contains('collapsed'));
-});
+    document.addEventListener('DOMContentLoaded', () => {
+        const shell = document.querySelector('.admin-shell');
+        if (!shell) return;
+        if (!document.querySelector('.admin-toggle-floating')) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.setAttribute('data-admin-toggle', 'true');
+            btn.className = 'admin-toggle-floating';
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg><span>Menu</span>`;
+            document.body.appendChild(btn);
+        }
+        syncSidebar(shell);
+        window.addEventListener('resize', () => syncSidebar(shell));
+    });
+})();
 </script>
 @endonce
 <div class="h-full min-h-screen lg:sticky lg:top-0 lg:left-0 flex flex-col bg-[#0f0f14] text-slate-100">

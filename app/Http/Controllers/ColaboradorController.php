@@ -8,6 +8,7 @@ use App\Models\Proyecto;
 use App\Models\ProyectoCategoria;
 use App\Models\Proveedor;
 use App\Models\ReporteSospechoso;
+use App\Services\PaypalService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -345,54 +346,177 @@ class ColaboradorController extends Controller
     }
 
     /**
-     * Registrar aporte (simulado)
+     * Registrar aporte iniciando pago en PayPal
      */
-    public function storeAportacion(Request $request, Proyecto $proyecto): RedirectResponse
+    public function storeAportacion(Request $request, Proyecto $proyecto, PaypalService $paypal): RedirectResponse
     {
         $validated = $request->validate([
-            'monto' => ['required'],
+            'monto' => ['required', 'numeric', 'min:1'],
             'recompensa_id' => ['nullable', 'exists:recompensas,id'],
             'mensaje' => ['nullable', 'string', 'max:500'],
+            'metodo' => ['required', 'in:paypal'],
+        ], [], [
+            'metodo' => 'metodo de pago',
         ]);
 
-        // Normaliza el monto por si viene con comas o puntos de miles
-        $monto = $validated['monto'];
-        if (is_string($monto)) {
-            $monto = str_replace([' ', ','], ['', '.'], $monto);
-        }
-        $monto = (float) $monto;
+        $monto = (float) str_replace([' ', ','], ['', '.'], (string) $validated['monto']);
 
-        if ($monto <= 0) {
-            return back()->withErrors(['monto' => 'El monto debe ser mayor que cero.'])->withInput();
-        }
+        $aportacion = null;
 
-        $aportacionId = null;
+        try {
+            DB::transaction(function () use ($proyecto, $monto, &$aportacion) {
+                $aportacion = Aportacion::create([
+                    'colaborador_id' => Auth::id(),
+                    'proyecto_id' => $proyecto->id,
+                    'monto' => $monto,
+                    'fecha_aportacion' => now(),
+                    'estado_pago' => 'pendiente',
+                    'id_transaccion_pago' => null,
+                ]);
+            });
 
-        DB::transaction(function () use ($proyecto, $monto, &$aportacionId) {
-            $aportacion = Aportacion::create([
-                'colaborador_id' => Auth::id(),
+            $returnUrl = route('colaborador.paypal.success', ['aporte' => $aportacion->id]);
+            $cancelUrl = route('colaborador.paypal.cancel', ['aporte' => $aportacion->id]);
+
+            $order = $paypal->createOrder($monto, 'USD', $returnUrl, $cancelUrl, (string) $aportacion->id);
+            $orderId = $order['id'] ?? null;
+
+            if ($orderId) {
+                $aportacion->update([
+                    'id_transaccion_pago' => $orderId,
+                ]);
+            }
+
+            $approveLink = collect($order['links'] ?? [])
+                ->firstWhere('rel', 'approve')['href'] ?? null;
+
+            if (!$approveLink) {
+                throw new \RuntimeException('No se recibió link de aprobación de PayPal.');
+            }
+
+            Log::info('Aporte iniciado via PayPal', [
+                'aportacion_id' => $aportacion->id,
                 'proyecto_id' => $proyecto->id,
+                'colaborador_id' => Auth::id(),
+                'order_id' => $orderId,
                 'monto' => $monto,
-                'fecha_aportacion' => now(),
-                'estado_pago' => 'pagado',
-                'id_transaccion_pago' => null,
             ]);
 
-            $proyecto->increment('monto_recaudado', $monto);
+            return redirect()->away($approveLink);
+        } catch (\Throwable $e) {
+            Log::error('Error iniciando pago PayPal', [
+                'error' => $e->getMessage(),
+                'proyecto_id' => $proyecto->id,
+                'colaborador_id' => Auth::id(),
+            ]);
 
-            $aportacionId = $aportacion->id;
-        });
+            if ($aportacion) {
+                $aportacion->delete();
+            }
 
-        Log::info('Aportacion creada por colaborador', [
-            'aportacion_id' => $aportacionId,
-            'colaborador_id' => Auth::id(),
-            'proyecto_id' => $proyecto->id,
-            'monto' => $monto,
+            return back()
+                ->withErrors(['pago' => 'No pudimos iniciar el pago con PayPal. Intenta nuevamente.'])
+                ->withInput();
+        }
+    }
+
+
+    public function paypalSuccess(Request $request, PaypalService $paypal): RedirectResponse
+    {
+        $orderId = $request->query('token'); // PayPal envia el ID de la orden en "token"
+        $aporteId = $request->query('aporte');
+
+        $aportacion = null;
+        if ($orderId) {
+            $aportacion = Aportacion::where('id_transaccion_pago', $orderId)->first();
+        }
+        if (!$aportacion && $aporteId) {
+            $aportacion = Aportacion::find($aporteId);
+        }
+
+        if (!$orderId || !$aportacion || $aportacion->colaborador_id !== Auth::id()) {
+            return redirect()
+                ->route('colaborador.dashboard')
+                ->withErrors(['pago' => 'No se encontro el aporte a confirmar.']);
+        }
+
+        try {
+            $capture = $paypal->captureOrder($orderId);
+        } catch (\Throwable $e) {
+            Log::error('PayPal capture error', [
+                'order_id' => $orderId,
+                'aportacion_id' => $aportacion->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $aportacion->update(['estado_pago' => 'fallido']);
+
+            return redirect()
+                ->route('colaborador.proyectos.aportar', $aportacion->proyecto_id)
+                ->withErrors(['pago' => 'No pudimos confirmar el pago en PayPal.']);
+        }
+
+        $status = $capture['status'] ?? null;
+        $captureId = data_get($capture, 'purchase_units.0.payments.captures.0.id');
+        $paidAmount = (float) data_get($capture, 'purchase_units.0.payments.captures.0.amount.value', 0);
+        $amountMatches = abs($paidAmount - (float) $aportacion->monto) < 0.01;
+
+        if ($status === 'COMPLETED' && $amountMatches) {
+            DB::transaction(function () use ($aportacion, $captureId, $orderId) {
+                if ($aportacion->estado_pago !== 'pagado') {
+                    $aportacion->proyecto()->increment('monto_recaudado', $aportacion->monto);
+                }
+
+                $aportacion->update([
+                    'estado_pago' => 'pagado',
+                    'id_transaccion_pago' => $captureId ?? $orderId,
+                    'fecha_aportacion' => now(),
+                ]);
+            });
+
+            return redirect()
+                ->route('colaborador.proyectos.show', $aportacion->proyecto_id)
+                ->with('status', 'Pago confirmado con PayPal. Gracias por tu aporte!');
+        }
+
+        Log::warning('PayPal capture no completado', [
+            'order_id' => $orderId,
+            'aportacion_id' => $aportacion->id,
+            'status' => $status,
+            'paid_amount' => $paidAmount,
         ]);
 
+        $aportacion->update(['estado_pago' => 'fallido']);
+
         return redirect()
-            ->route('colaborador.proyectos.show', $proyecto)
-            ->with('status', 'Aporte registrado (#'.$aportacionId.'). Procesaremos tu pago en breve.');
+            ->route('colaborador.proyectos.aportar', $aportacion->proyecto_id)
+            ->withErrors(['pago' => 'El pago no se completo en PayPal.']);
+    }
+
+    public function paypalCancel(Request $request): RedirectResponse
+    {
+        $orderId = $request->query('token');
+        $aporteId = $request->query('aporte');
+
+        $aportacion = null;
+        if ($orderId) {
+            $aportacion = Aportacion::where('id_transaccion_pago', $orderId)->first();
+        }
+        if (!$aportacion && $aporteId) {
+            $aportacion = Aportacion::find($aporteId);
+        }
+
+        if ($aportacion && $aportacion->colaborador_id === Auth::id()) {
+            $aportacion->update(['estado_pago' => 'fallido']);
+
+            return redirect()
+                ->route('colaborador.proyectos.aportar', $aportacion->proyecto_id)
+                ->withErrors(['pago' => 'Pago cancelado en PayPal.']);
+        }
+
+        return redirect()
+            ->route('colaborador.dashboard')
+            ->withErrors(['pago' => 'Pago cancelado.']);
     }
 
     /**

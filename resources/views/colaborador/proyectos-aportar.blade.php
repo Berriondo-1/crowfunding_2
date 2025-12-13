@@ -61,21 +61,14 @@
                     </div>
 
                     <div class="space-y-2">
-                        <p class="text-xs text-zinc-400">Metodo de pago</p>
-                        <div class="grid gap-2 sm:grid-cols-3">
-                            <label class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white cursor-pointer">
-                                <input type="radio" name="metodo" value="tarjeta" class="text-emerald-400 focus:ring-emerald-400" checked>
-                                Tarjeta
-                            </label>
-                            <label class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white cursor-pointer">
-                                <input type="radio" name="metodo" value="transferencia" class="text-emerald-400 focus:ring-emerald-400">
-                                Transferencia
-                            </label>
-                            <label class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white cursor-pointer">
-                                <input type="radio" name="metodo" value="wallet" class="text-emerald-400 focus:ring-emerald-400">
-                                Wallet
-                            </label>
-                        </div>
+                        <p class="text-xs text-zinc-400">Método de pago</p>
+                        <label class="flex items-center gap-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-3 text-sm text-white cursor-pointer">
+                            <input type="radio" name="metodo" value="paypal" class="text-emerald-400 focus:ring-emerald-400" checked>
+                            <div>
+                                <div class="font-semibold text-white">PayPal</div>
+                                <div class="text-[11px] text-zinc-400">Paga con tarjeta, saldo o cuenta PayPal. Te redirigiremos para completar el pago.</div>
+                            </div>
+                        </label>
                     </div>
 
                     <div class="pt-2">

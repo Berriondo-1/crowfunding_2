@@ -18,7 +18,7 @@
         $backLabel = trim($__env->yieldContent('back_label', 'Volver al panel'));
     @endphp
     <header class="sticky top-0 z-30 border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl">
-        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div class="flex items-center gap-4">
                 <a href="{{ url('/') }}" class="flex items-center gap-3">
                     <img src="/images/brand/mark.png" alt="CrowdUp" class="h-8 w-8" />
@@ -48,10 +48,12 @@
     </header>
 
     <main class="mx-auto w-full max-w-full px-0 pt-0 pb-6 space-y-8">
-        <div class="grid gap-0 lg:grid-cols-[280px_1fr] lg:min-h-[calc(100vh-64px)] lg:overflow-hidden admin-shell">
+        <div class="gap-0 lg:grid lg:grid-cols-[280px_1fr] lg:min-h-[calc(100vh-64px)] lg:overflow-hidden admin-shell">
             <aside class="lg:sticky lg:top-0 admin-sidebar">
                 @include('colaborador.partials.modules', ['active' => trim($__env->yieldContent('active')) ?: 'general'])
             </aside>
+
+            <div class="admin-sidebar-backdrop" data-admin-toggle></div>
 
             <div class="space-y-8 lg:overflow-y-auto lg:h-full lg:pr-2 admin-scroll admin-main">
                 @yield('content')

@@ -15,7 +15,7 @@
     </div>
 
     <header class="sticky top-0 z-30 border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl">
-        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <a href="{{ url('/') }}" class="flex items-center gap-3">
                 <img src="/images/brand/mark.png" alt="CrowdUp" class="h-8 w-8" />
                 <span class="text-xl font-extrabold tracking-tight">Crowd<span class="text-indigo-400">Up</span> Admin</span>
@@ -39,10 +39,12 @@
     </header>
 
     <main class="mx-auto w-full max-w-full px-0 pt-0 pb-6">
-        <div class="grid gap-0 lg:grid-cols-[280px_1fr] lg:min-h-[calc(100vh-64px)] lg:overflow-hidden admin-shell">
+        <div class="gap-0 lg:grid lg:grid-cols-[280px_1fr] lg:min-h-[calc(100vh-64px)] lg:overflow-hidden admin-shell">
             <aside class="lg:sticky lg:top-0 admin-sidebar">
                 @include('admin.partials.modules', ['active' => 'dashboard'])
             </aside>
+
+            <div class="admin-sidebar-backdrop" data-admin-toggle></div>
 
             <div class="space-y-10 lg:overflow-y-auto lg:h-full lg:pr-2 admin-scroll admin-main">
                 <section id="overview" class="relative overflow-hidden rounded-[18px] admin-hero px-6 py-7 shadow-xl ring-1 ring-white/10">
@@ -198,5 +200,4 @@
     </main>
 </body>
 </html>
-
 
