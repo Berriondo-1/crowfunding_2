@@ -29,7 +29,7 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <a href="{{ url('/') }}" class="flex items-center gap-2">
         <img src="/images/brand/mark.png" alt="CrowdUp" class="h-7 w-7" />
-        <span class="font-extrabold tracking-tight text-xl">Crowd<span class="text-indigo-600">Up</span></span>
+        <span class="hidden sm:inline font-extrabold tracking-tight text-xl">Crowd<span class="text-indigo-600">Up</span></span>
       </a>
 
       <nav class="hidden md:flex items-center gap-8 text-sm">
@@ -42,9 +42,9 @@
       <div class="flex items-center gap-3">
         @if (Route::has('login'))
           @auth
-            <a href="{{ url('/dashboard') }}" class="hidden sm:inline-flex items-center px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800">Panel</a>
+            <a href="{{ url('/dashboard') }}" class="inline-flex items-center px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800">Panel</a>
           @else
-            <a href="{{ route('login') }}" class="hidden sm:inline-flex items-center px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800">Entrar</a>
+            <a href="{{ route('login') }}" class="inline-flex items-center px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800">Entrar</a>
             @if (Route::has('register'))
               <a href="{{ route('register') }}" class="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">Crear cuenta</a>
             @endif
@@ -57,7 +57,7 @@
   <!-- HERO -->
   <section class="relative overflow-hidden">
     <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
-      <img src="/images/hero/texture.jpg" alt="" class="w-full h-full object-cover opacity-90 dark:opacity-90" />
+      <img src="/images/hero/texture1.jpg" alt="" class="w-full h-full object-cover opacity-90 dark:opacity-90" />
       <div class="absolute inset-0 bg-gradient-to-b from-white via-white/70 to-white dark:from-zinc-950 dark:via-zinc-950/70 dark:to-zinc-950"></div>
       <div class="absolute -top-32 -right-24 w-[36rem] h-[36rem] rounded-full blur-3xl opacity-30" style="background: radial-gradient(closest-side, #6366f1, transparent 70%);"></div>
     </div>
@@ -95,16 +95,8 @@
         </div>
       </div>
 
-      <div class="relative">
-        <div class="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
-          <!-- Reemplaza la imagen o coloca un video poster -->
-          <img src="/images/hero/cover.jpg" alt="Campañas exitosas" class="w-full h-full object-cover">
-        </div>
-        <!-- Tarjeta flotante -->
-        <div class="glass absolute -bottom-6 -left-6 rounded-xl p-4 shadow-lg border border-white/10">
-          <p class="text-xs uppercase tracking-wider text-zinc-300">Recaudado hoy</p>
-          <p class="text-2xl font-bold">US$ <span data-counter-to="184230">0</span></p>
-        </div>
+      <div class="relative lg:justify-self-end">
+        <!-- Imagen del hero removida -->
       </div>
     </div>
   </section>
