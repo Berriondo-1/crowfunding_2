@@ -57,4 +57,9 @@ class Proyecto extends Model
     {
         return $this->hasMany(\App\Models\Proveedor::class, 'proyecto_id');
     }
+
+    public function calificaciones()
+    {
+        return $this->hasMany(\App\Models\Calificacion::class, 'proyecto_id');
+    }
 }

@@ -65,7 +65,13 @@
 
         {{-- Progreso y aporte --}}
         <div class="grid gap-4 p-6 lg:grid-cols-[2fr_1fr] bg-black/40">
-            <div class="space-y-3">
+            @php
+                $avgRating = round((float) ($proyecto->rating_promedio ?? 0), 1);
+                $ratingTotal = (int) ($proyecto->rating_total ?? 0);
+                $filledStars = (int) floor($avgRating);
+                $halfStar = ($avgRating - $filledStars) >= 0.5;
+            @endphp
+            <div class="space-y-4">
                 <div class="flex items-center justify-between text-sm text-indigo-50/90">
                     <span class="font-semibold">Progreso del proyecto</span>
                     <span class="text-lg font-bold text-sky-200">
@@ -97,22 +103,47 @@
                 </div>
             </div>
 
-            <div id="apoyar" class="rounded-2xl border border-white/10 bg-zinc-900/80 p-4 space-y-3 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-100/70">
-                    Tu aporte a este proyecto
-                </p>
-                <p class="text-3xl font-extrabold text-emerald-300">
-                    ${{ number_format($aporteUsuario, 0, ',', '.') }}
-                </p>
-                <p class="text-xs text-indigo-50/80">
-                    Puedes decidir aumentar tu aporte si este proyecto te inspira.
-                </p>
-                <a href="{{ route('colaborador.aportaciones') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-white shadow-[0_10px_28px_rgba(79,70,229,0.35)] hover:bg-indigo-400 transition-colors">
-                    Revisar mis aportes
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </a>
+            <div class="space-y-3">
+                <div id="apoyar" class="rounded-2xl border border-white/10 bg-zinc-900/80 p-4 space-y-3 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-100/70">
+                        Tu aporte a este proyecto
+                    </p>
+                    <p class="text-3xl font-extrabold text-emerald-300">
+                        ${{ number_format($aporteUsuario, 0, ',', '.') }}
+                    </p>
+                    <p class="text-xs text-indigo-50/80">
+                        Puedes decidir aumentar tu aporte si este proyecto te inspira.
+                    </p>
+                    <a href="{{ route('colaborador.aportaciones') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-white shadow-[0_10px_28px_rgba(79,70,229,0.35)] hover:bg-indigo-400 transition-colors">
+                        Revisar mis aportes
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="rounded-2xl border border-white/10 bg-zinc-900/80 p-4 space-y-3 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-100/70">Calificación</p>
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1 text-amber-300">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        @if ($i <= $filledStars)
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        @elseif ($i === $filledStars + 1 && $halfStar)
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><defs><linearGradient id="half"><stop offset="50%" stop-color="currentColor"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs><path fill="url(#half)" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        @else
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.21 2.91-3.105.23c-.833.062-1.17 1.107-.536 1.651l2.36 2.003-.711 3.03c-.191.813.691 1.456 1.405 1.028L10 12.347l2.765 1.39c.713.428 1.596-.215 1.405-1.028l-.711-3.03 2.36-2.003c.634-.544.297-1.589-.536-1.65l-3.105-.231-1.21-2.91z" clip-rule="evenodd"/></svg>
+                                        @endif
+                                    @endfor
+                                </div>
+                                <div class="text-sm text-indigo-50/80 font-semibold">{{ $avgRating }} / 5</div>
+                            </div>
+                            <p class="text-[12px] text-zinc-400">{{ $ratingTotal }} calificaciones</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -167,33 +198,78 @@
         @endif
     </section>
 
-    {{-- Hitos / Actualizaciones --}}
+    {{-- Hitos / Calificaciones --}}
     <section class="space-y-3">
-        <h2 class="text-sm font-semibold text-zinc-100 tracking-wide uppercase">
-            Hitos y actualizaciones
-        </h2>
-
-        @if ($proyecto->hitos->isEmpty())
-            <div class="rounded-2xl border border-white/5 bg-black/40 p-4 text-xs text-zinc-400">
-                El creador aún no ha publicado hitos o actualizaciones para este proyecto.
-            </div>
-        @else
+        <div class="grid gap-4 lg:grid-cols-2">
             <div class="space-y-3">
-                @foreach ($proyecto->hitos as $hito)
-                    <article class="rounded-2xl border border-white/5 bg-black/40 p-4 space-y-1">
-                        <h3 class="text-sm font-semibold text-zinc-50">
-                            {{ $hito->titulo ?? 'Actualización' }}
-                        </h3>
-                        <p class="text-[11px] text-zinc-400">
-                            {{ optional($hito->created_at)->format('d/m/Y H:i') }}
-                        </p>
-                        <p class="text-xs text-zinc-200">
-                            {{ $hito->descripcion ?? $hito->contenido }}
-                        </p>
-                    </article>
-                @endforeach
+                <h2 class="text-sm font-semibold text-zinc-100 tracking-wide uppercase">
+                    Hitos y actualizaciones
+                </h2>
+
+                @if ($proyecto->hitos->isEmpty())
+                    <div class="rounded-2xl border border-white/5 bg-black/40 p-4 text-xs text-zinc-400">
+                        El creador aún no ha publicado hitos o actualizaciones para este proyecto.
+                    </div>
+                @else
+                    <div class="space-y-3">
+                        @foreach ($proyecto->hitos as $hito)
+                            <article class="rounded-2xl border border-white/5 bg-black/40 p-4 space-y-1">
+                                <h3 class="text-sm font-semibold text-zinc-50">
+                                    {{ $hito->titulo ?? 'Actualización' }}
+                                </h3>
+                                <p class="text-[11px] text-zinc-400">
+                                    {{ optional($hito->created_at)->format('d/m/Y H:i') }}
+                                </p>
+                                <p class="text-xs text-zinc-200">
+                                    {{ $hito->descripcion ?? $hito->contenido }}
+                                </p>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
             </div>
-        @endif
+
+            <div class="space-y-3">
+                <h2 class="text-sm font-semibold text-zinc-100 tracking-wide uppercase">
+                    Comentarios y calificaciones
+                </h2>
+                @if ($calificaciones->isEmpty())
+                    <div class="rounded-2xl border border-white/5 bg-black/40 p-4 text-xs text-zinc-400">
+                        Aún no hay calificaciones para este proyecto.
+                    </div>
+                @else
+                    <div class="space-y-3">
+                        @foreach ($calificaciones as $cal)
+                            @php
+                                $stars = (int) $cal->puntaje;
+                            @endphp
+                            <article class="rounded-2xl border border-white/5 bg-black/40 p-4 space-y-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">
+                                            {{ $cal->colaborador->nombre_completo ?? $cal->colaborador->name ?? 'Colaborador' }}
+                                        </p>
+                                        <p class="text-[11px] text-zinc-500">
+                                            {{ optional($cal->fecha_calificacion ?? $cal->created_at)->format('d/m/Y H:i') }}
+                                        </p>
+                                    </div>
+                                    <div class="flex items-center gap-1 text-amber-300">
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $i <= $stars ? 'fill-current' : 'text-zinc-600' }}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        @endfor
+                                    </div>
+                                </div>
+                                @if ($cal->comentarios)
+                                    <p class="text-sm text-zinc-200">
+                                        {{ $cal->comentarios }}
+                                    </p>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
     </section>
 </div>
 @endsection

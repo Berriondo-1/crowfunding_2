@@ -79,9 +79,23 @@
                     <label class="text-sm text-zinc-300">Fecha limite</label>
                     <input type="date" name="fecha_limite" value="{{ optional($proyecto->fecha_limite)->format('Y-m-d') }}" class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400">
                 </div>
-                <div class="md:col-span-2">
+                <div class="md:col-span-2 space-y-2">
                     <label class="text-sm text-zinc-300">Reemplazar portada</label>
-                    <input type="file" name="portada" accept="image/*" class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400">
+                    <label for="portada" class="group flex flex-col gap-2 rounded-xl border-2 border-dashed border-emerald-400/40 bg-emerald-500/5 px-4 py-6 text-sm text-emerald-50 cursor-pointer hover:border-emerald-400 transition">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-500/40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </span>
+                            <div>
+                                <p class="font-semibold text-white">Arrastra o haz clic para seleccionar</p>
+                                <p id="portada-name" class="text-[12px] text-emerald-200/80">Sin archivo seleccionado</p>
+                            </div>
+                        </div>
+                        <p class="text-[12px] text-emerald-200/70">Opcional. Máx. 8MB (JPG, PNG, WEBP).</p>
+                        <input id="portada" type="file" name="portada" accept="image/*" class="hidden">
+                    </label>
                     @if($proyecto->imagen_portada)
                         <p class="mt-1 text-xs text-zinc-400">Actual: <span class="text-white">{{ $proyecto->imagen_portada }}</span></p>
                     @endif
@@ -95,3 +109,26 @@
         </section>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('portada');
+    const label = document.getElementById('portada-name');
+    if (!input || !label) return;
+    input.addEventListener('change', () => {
+        if (input.files && input.files.length) {
+            label.textContent = input.files[0].name;
+            label.classList.remove('text-emerald-200/80');
+            label.classList.add('text-white');
+            label.closest('label')?.classList.add('border-emerald-400');
+        } else {
+            label.textContent = 'Sin archivo seleccionado';
+            label.classList.add('text-emerald-200/80');
+            label.classList.remove('text-white');
+            label.closest('label')?.classList.remove('border-emerald-400');
+        }
+    });
+});
+</script>
+@endpush

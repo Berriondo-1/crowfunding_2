@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aportacion;
+use App\Models\Calificacion;
 use App\Models\Pago;
 use App\Models\Proyecto;
 use App\Models\ProyectoCategoria;
@@ -52,6 +53,8 @@ class ColaboradorController extends Controller
                     $q->where('colaborador_id', $colaboradorId);
                 },
             ])
+            ->withAvg('calificaciones as rating_promedio', 'puntaje')
+            ->withCount('calificaciones as rating_total')
             ->where('estado', 'publicado')
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
@@ -212,27 +215,78 @@ class ColaboradorController extends Controller
         $aporteUsuario = Aportacion::where('colaborador_id', $colaboradorId)
             ->where('proyecto_id', $proyecto->id)
             ->sum('monto');
+        $haAportado = $aporteUsuario > 0;
 
-        // Cargamos relaciones útiles
+        // Cargamos relaciones útiles + rating
         $proyecto->load([
             'creador',
             'hitos',        // actualizaciones
             'recompensas',  // recompensas del proyecto
-        ]);
+        ])
+        ->loadAvg('calificaciones as rating_promedio', 'puntaje')
+        ->loadCount('calificaciones as rating_total');
 
-        return view('colaborador.proyectos-show', compact('proyecto', 'aporteUsuario'));
+        $calificacionUsuario = Calificacion::where('proyecto_id', $proyecto->id)
+            ->where('colaborador_id', $colaboradorId)
+            ->first();
+
+        $calificaciones = Calificacion::with('colaborador')
+            ->where('proyecto_id', $proyecto->id)
+            ->latest('fecha_calificacion')
+            ->get();
+
+        return view('colaborador.proyectos-show', compact('proyecto', 'aporteUsuario', 'haAportado', 'calificacionUsuario', 'calificaciones'));
     }
 
     public function resumenProyecto(Proyecto $proyecto): View
     {
         $colaboradorId = Auth::id();
-        $proyecto->load(['creador', 'hitos']);
+        $proyecto->load(['creador', 'hitos'])
+            ->loadAvg('calificaciones as rating_promedio', 'puntaje')
+            ->loadCount('calificaciones as rating_total');
 
         $aporteUsuario = Aportacion::where('colaborador_id', $colaboradorId)
             ->where('proyecto_id', $proyecto->id)
             ->sum('monto');
+        $haAportado = $aporteUsuario > 0;
 
-        return view('colaborador.proyectos-resumen', compact('proyecto', 'aporteUsuario'));
+        $calificacionUsuario = Calificacion::where('proyecto_id', $proyecto->id)
+            ->where('colaborador_id', $colaboradorId)
+            ->first();
+
+        return view('colaborador.proyectos-resumen', compact('proyecto', 'aporteUsuario', 'haAportado', 'calificacionUsuario'));
+    }
+
+    public function calificarProyecto(Request $request, Proyecto $proyecto): RedirectResponse
+    {
+        $colaboradorId = Auth::id();
+
+        $aporte = Aportacion::where('colaborador_id', $colaboradorId)
+            ->where('proyecto_id', $proyecto->id)
+            ->exists();
+
+        if (!$aporte) {
+            return back()->withErrors(['calificacion' => 'Debes haber aportado al proyecto para calificarlo.']);
+        }
+
+        $validated = $request->validate([
+            'puntaje' => ['required', 'integer', 'min:1', 'max:5'],
+            'comentarios' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        Calificacion::updateOrCreate(
+            [
+                'proyecto_id' => $proyecto->id,
+                'colaborador_id' => $colaboradorId,
+            ],
+            [
+                'puntaje' => $validated['puntaje'],
+                'comentarios' => $validated['comentarios'] ?? null,
+                'fecha_calificacion' => now(),
+            ]
+        );
+
+        return back()->with('status', 'Gracias por calificar este proyecto.');
     }
 
     public function proveedoresProyecto(Request $request, Proyecto $proyecto): View

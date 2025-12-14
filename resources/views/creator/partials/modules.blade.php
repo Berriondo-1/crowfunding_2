@@ -328,7 +328,7 @@
         <a href="{{ route('creador.avances') }}" class="{{ $linkClass }} {{ $active === 'avances' ? $activeClass : '' }}">
             <span class="flex items-center gap-2">
                 <span class="inline-flex h-2 w-2 rounded-full bg-indigo-200"></span>
-                Avances
+                Avances y Calificaciones
             </span>
             <span class="text-xs text-indigo-100/90">Ir</span>
         </a>

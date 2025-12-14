@@ -220,10 +220,24 @@
                         <input type="number" name="calificacion" min="1" max="5" step="1" value="{{ old('calificacion') }}" @disabled($formDisabled) class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="5">
                         <p class="text-[11px] text-zinc-500 mt-1">Ayuda a construir historial del proveedor.</p>
                     </div>
-                    <div>
+                    <div class="space-y-2">
                         <label class="text-sm text-zinc-300">Adjuntar facturas y comprobantes (PDF, JPG, PNG) *</label>
-                        <input type="file" name="adjuntos[]" multiple @disabled($formDisabled) class="mt-1 block w-full text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500/20 file:px-4 file:py-2 file:text-indigo-100 hover:file:bg-indigo-500/30">
-                        <p class="mt-1 text-xs text-zinc-500">Obligatorio para validar el pago. Máximo 8MB por archivo.</p>
+                        <label for="reportes-adjuntos" class="group flex flex-col gap-2 rounded-xl border-2 border-dashed border-emerald-400/40 bg-emerald-500/5 px-4 py-5 text-sm text-emerald-50 cursor-pointer hover:border-emerald-400 transition @if($formDisabled) opacity-60 cursor-not-allowed @endif">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-500/40">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <p class="font-semibold text-white">Arrastra o haz clic para seleccionar</p>
+                                    <p class="text-[12px] text-emerald-200/80" data-file-label="reportes-adjuntos">Sin archivos seleccionados</p>
+                                </div>
+                            </div>
+                            <p class="text-[12px] text-emerald-200/70">Obligatorio para validar el pago. Máximo 8MB por archivo.</p>
+                            <input id="reportes-adjuntos" type="file" name="adjuntos[]" multiple @disabled($formDisabled) class="hidden" data-file-preview="reportes-adjuntos">
+                        </label>
+                        <div class="flex flex-wrap gap-2 text-xs text-zinc-300" data-file-list="reportes-adjuntos"></div>
                     </div>
                     <div class="pt-2">
                         <button type="submit" @disabled($formDisabled) class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50">
@@ -252,6 +266,43 @@
             select.addEventListener('change', updateSaldo);
             updateSaldo();
         })();
+
+        document.querySelectorAll('input[type="file"][data-file-preview]').forEach(input => {
+            const previewId = input.getAttribute('data-file-preview');
+            const container = document.querySelector(`[data-file-list="${previewId}"]`);
+            const label = document.querySelector(`[data-file-label="${previewId}"]`);
+            const updateList = () => {
+                if (!container) return;
+                container.innerHTML = '';
+                const files = Array.from(input.files || []);
+                if (!files.length) {
+                    container.textContent = 'Sin archivos seleccionados';
+                    container.classList.add('text-zinc-500');
+                    if (label) {
+                        label.textContent = 'Sin archivos seleccionados';
+                        label.classList.add('text-emerald-200/80');
+                        label.classList.remove('text-white');
+                        label.closest('label')?.classList.remove('border-emerald-400');
+                    }
+                    return;
+                }
+                container.classList.remove('text-zinc-500');
+                files.forEach(file => {
+                    const badge = document.createElement('span');
+                    badge.className = 'inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white';
+                    badge.textContent = file.name;
+                    container.appendChild(badge);
+                });
+                if (label) {
+                    label.textContent = files.length === 1 ? files[0].name : `${files.length} archivos seleccionados`;
+                    label.classList.remove('text-emerald-200/80');
+                    label.classList.add('text-white');
+                    label.closest('label')?.classList.add('border-emerald-400');
+                }
+            };
+            input.addEventListener('change', updateList);
+            updateList();
+        });
     </script>
 @endif
 @endsection

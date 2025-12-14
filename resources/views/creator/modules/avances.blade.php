@@ -103,11 +103,24 @@
                         <label class="text-sm font-semibold text-white">Contenido</label>
                         <textarea name="contenido" rows="4" class="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="Comparte avances, bloqueos o próximos pasos..."></textarea>
                     </div>
-                    <div>
+                    <div class="space-y-2">
                         <label class="text-sm font-semibold text-white">Adjuntos (arrastra o selecciona archivos)</label>
-                        <input type="file" name="adjuntos[]" multiple class="mt-1 block w-full text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500/20 file:px-4 file:py-2 file:text-indigo-100 hover:file:bg-indigo-500/30" data-file-preview="avance-nuevo">
-                        <div class="mt-2 flex flex-wrap gap-2 text-xs text-zinc-300" data-file-list="avance-nuevo"></div>
-                        <p class="mt-1 text-xs text-zinc-500">Máximo 8MB por archivo.</p>
+                        <label for="adjuntos-nuevo" class="group flex flex-col gap-2 rounded-xl border-2 border-dashed border-emerald-400/40 bg-emerald-500/5 px-4 py-5 text-sm text-emerald-50 cursor-pointer hover:border-emerald-400 transition">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-500/40">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <p class="font-semibold text-white">Arrastra o haz clic para seleccionar</p>
+                                    <p class="text-[12px] text-emerald-200/80" data-file-label="avance-nuevo">Sin archivos seleccionados</p>
+                                </div>
+                            </div>
+                            <p class="text-[12px] text-emerald-200/70">Opcional. Máx. 8MB por archivo.</p>
+                            <input id="adjuntos-nuevo" type="file" name="adjuntos[]" multiple class="hidden" data-file-preview="avance-nuevo">
+                        </label>
+                        <div class="flex flex-wrap gap-2 text-xs text-zinc-300" data-file-list="avance-nuevo"></div>
                     </div>
                     <div class="pt-2">
                         <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 hover:bg-emerald-500">
@@ -195,11 +208,24 @@
                                             </label>
                                             <p class="text-[11px] text-zinc-500 ml-6">Los hitos destacados se muestran a colaboradores.</p>
                                         </div>
-                                        <div>
+                                        <div class="space-y-2">
                                             <label class="text-sm text-zinc-300">Reemplazar adjuntos</label>
-                                            <input type="file" name="adjuntos[]" multiple class="mt-1 block w-full text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500/20 file:px-4 file:py-2 file:text-indigo-100 hover:file:bg-indigo-500/30" data-file-preview="avance-{{ $actualizacion->id }}">
-                                            <div class="mt-2 flex flex-wrap gap-2 text-xs text-zinc-300" data-file-list="avance-{{ $actualizacion->id }}"></div>
-                                            <p class="mt-1 text-[11px] text-zinc-500">Si adjuntas nuevos archivos, sustituiremos los actuales.</p>
+                                            <label for="adjuntos-{{ $actualizacion->id }}" class="group flex flex-col gap-2 rounded-xl border-2 border-dashed border-emerald-400/40 bg-emerald-500/5 px-4 py-4 text-sm text-emerald-50 cursor-pointer hover:border-emerald-400 transition">
+                                                <div class="flex items-center gap-3">
+                                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-500/40">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                    </span>
+                                                    <div>
+                                                        <p class="font-semibold text-white text-sm">Arrastra o haz clic para seleccionar</p>
+                                                        <p class="text-[12px] text-emerald-200/80" data-file-label="avance-{{ $actualizacion->id }}">Sin archivos seleccionados</p>
+                                                    </div>
+                                                </div>
+                                                <p class="text-[12px] text-emerald-200/70">Máx. 8MB por archivo. Reemplaza los existentes.</p>
+                                                <input id="adjuntos-{{ $actualizacion->id }}" type="file" name="adjuntos[]" multiple class="hidden" data-file-preview="avance-{{ $actualizacion->id }}">
+                                            </label>
+                                            <div class="mt-1 flex flex-wrap gap-2 text-xs text-zinc-300" data-file-list="avance-{{ $actualizacion->id }}"></div>
                                         </div>
                                         <div class="flex flex-wrap gap-2 pt-2">
                                             <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500">
@@ -223,6 +249,45 @@
                 </div>
             </section>
         </div>
+
+        {{-- Calificaciones y comentarios de colaboradores --}}
+        <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-6 shadow-2xl ring-1 ring-amber-500/10 space-y-4 mt-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Feedback</p>
+                    <h3 class="text-lg font-bold text-white">Calificaciones y comentarios</h3>
+                    <p class="text-sm text-zinc-400">Lo que dicen quienes apoyaron el proyecto.</p>
+                </div>
+                <div class="text-xs text-zinc-300">
+                    <span>{{ $calificaciones->count() }} opiniones</span>
+                </div>
+            </div>
+            @if ($calificaciones->isEmpty())
+                <p class="text-sm text-zinc-400">Aún no hay calificaciones para este proyecto.</p>
+            @else
+                <div class="grid gap-3 md:grid-cols-2">
+                    @foreach ($calificaciones as $cal)
+                        @php $stars = (int) $cal->puntaje; @endphp
+                        <article class="rounded-2xl border border-white/10 bg-black/40 p-4 space-y-2 shadow-inner">
+                            <div class="flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="text-sm font-semibold text-white">{{ $cal->colaborador->nombre_completo ?? $cal->colaborador->name ?? 'Colaborador' }}</p>
+                                    <p class="text-[11px] text-zinc-500">{{ optional($cal->fecha_calificacion ?? $cal->created_at)->format('d/m/Y H:i') }}</p>
+                                </div>
+                                <div class="flex items-center gap-1 text-amber-300">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $i <= $stars ? 'fill-current' : 'text-zinc-600' }}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    @endfor
+                                </div>
+                            </div>
+                            @if ($cal->comentarios)
+                                <p class="text-sm text-zinc-200">{{ $cal->comentarios }}</p>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            @endif
+        </section>
     @endif
 @endsection
 
@@ -232,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[type="file"][data-file-preview]').forEach(input => {
         const previewId = input.getAttribute('data-file-preview');
         const container = document.querySelector(`[data-file-list="${previewId}"]`);
+        const label = document.querySelector(`[data-file-label="${previewId}"]`);
         const updateList = () => {
             if (!container) return;
             container.innerHTML = '';
@@ -239,6 +305,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!files.length) {
                 container.textContent = 'Sin archivos seleccionados';
                 container.classList.add('text-zinc-500');
+                if (label) {
+                    label.textContent = 'Sin archivos seleccionados';
+                    label.classList.add('text-emerald-200/80');
+                    label.classList.remove('text-white');
+                    label.closest('label')?.classList.remove('border-emerald-400');
+                }
                 return;
             }
             container.classList.remove('text-zinc-500');
@@ -248,6 +320,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 badge.textContent = file.name;
                 container.appendChild(badge);
             });
+            if (label) {
+                label.textContent = files.length === 1 ? files[0].name : `${files.length} archivos seleccionados`;
+                label.classList.remove('text-emerald-200/80');
+                label.classList.add('text-white');
+                label.closest('label')?.classList.add('border-emerald-400');
+            }
         };
         input.addEventListener('change', updateList);
         updateList();

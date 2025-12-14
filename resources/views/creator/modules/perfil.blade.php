@@ -90,9 +90,23 @@
                     <textarea name="info_personal" rows="2" class="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="Certificaciones, idiomas, ubicacion...">{{ old('info_personal', Auth::user()->info_personal) }}</textarea>
                 </div>
 
-                <div>
+                <div class="space-y-2">
                     <label class="text-sm text-zinc-300">Foto de perfil (JPG/PNG, max 2MB)</label>
-                    <input type="file" name="foto_perfil" class="mt-1 block w-full text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500/20 file:px-4 file:py-2 file:text-indigo-100 hover:file:bg-indigo-500/30">
+                    <label for="foto_perfil" class="group flex flex-col gap-2 rounded-xl border-2 border-dashed border-emerald-400/40 bg-emerald-500/5 px-4 py-5 text-sm text-emerald-50 cursor-pointer hover:border-emerald-400 transition">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-500/40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </span>
+                            <div>
+                                <p class="font-semibold text-white">Arrastra o haz clic para seleccionar</p>
+                                <p id="foto_perfil-name" class="text-[12px] text-emerald-200/80">Sin archivo seleccionado</p>
+                            </div>
+                        </div>
+                        <p class="text-[12px] text-emerald-200/70">JPG o PNG. Máx. 2MB.</p>
+                        <input id="foto_perfil" type="file" name="foto_perfil" accept="image/*" class="hidden">
+                    </label>
                 </div>
 
                 <div class="pt-2">
@@ -157,3 +171,26 @@
 
     </section>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('foto_perfil');
+    const label = document.getElementById('foto_perfil-name');
+    if (!input || !label) return;
+    input.addEventListener('change', () => {
+        if (input.files && input.files.length) {
+            label.textContent = input.files[0].name;
+            label.classList.remove('text-emerald-200/80');
+            label.classList.add('text-white');
+            label.closest('label')?.classList.add('border-emerald-400');
+        } else {
+            label.textContent = 'Sin archivo seleccionado';
+            label.classList.add('text-emerald-200/80');
+            label.classList.remove('text-white');
+            label.closest('label')?.classList.remove('border-emerald-400');
+        }
+    });
+});
+</script>
+@endpush

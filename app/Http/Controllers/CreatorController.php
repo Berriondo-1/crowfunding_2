@@ -301,10 +301,16 @@ class CreatorController extends Controller
         $selectedProject = $proyectos->firstWhere('id', $selectedProjectId);
 
         $actualizaciones = collect();
+        $calificaciones = collect();
         if ($selectedProjectId) {
             $actualizaciones = ActualizacionProyecto::where('proyecto_id', $selectedProjectId)
                 ->orderByDesc('fecha_publicacion')
                 ->orderByDesc('id')
+                ->get();
+
+            $calificaciones = \App\Models\Calificacion::with('colaborador')
+                ->where('proyecto_id', $selectedProjectId)
+                ->latest('fecha_calificacion')
                 ->get();
         }
 
@@ -322,7 +328,7 @@ class CreatorController extends Controller
             ];
         }
 
-        return view('creator.modules.avances', compact('proyectos', 'selectedProjectId', 'actualizaciones', 'selectedProject', 'projectContext'));
+        return view('creator.modules.avances', compact('proyectos', 'selectedProjectId', 'actualizaciones', 'selectedProject', 'projectContext', 'calificaciones'));
     }
 
     public function fondos(Request $request): View
