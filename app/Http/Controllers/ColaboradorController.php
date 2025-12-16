@@ -12,12 +12,14 @@ use App\Models\ReporteSospechoso;
 use App\Services\PaypalService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
+use App\Models\VerificacionSolicitud;
 
 class ColaboradorController extends Controller
 {
@@ -78,6 +80,89 @@ class ColaboradorController extends Controller
             'categoria',
             'categorias'
         ));
+    }
+
+    /**
+     * Recibe la solicitud para convertirse en creador.
+     * Guarda el registro y avisa por correo al equipo.
+     */
+    public function solicitarCreador(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'mensaje' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $asJson = $request->expectsJson() || $request->wantsJson();
+
+        $pendiente = VerificacionSolicitud::where('user_id', $user->id)
+            ->where('estado', 'pendiente')
+            ->latest()
+            ->first();
+
+        if ($pendiente) {
+            // Si ya hay una pendiente, actualiza el mensaje y reenvía correo
+            if (!empty($validated['mensaje'])) {
+                $pendiente->nota = $validated['mensaje'];
+                $pendiente->save();
+            }
+            $solicitud = $pendiente;
+        } else {
+            $solicitud = VerificacionSolicitud::create([
+                'user_id' => $user->id,
+                'estado' => 'pendiente',
+                'nota' => $validated['mensaje'] ?? null,
+                'adjuntos' => null,
+            ]);
+        }
+
+        $adminEmail = env('CREATOR_REQUEST_EMAIL')
+            ?: config('mail.request_to')
+            ?: config('mail.from.address')
+            ?: env('MAIL_FROM_ADDRESS')
+            ?: 'nicolas.rodriguez.quintero@correounivalle.edu.co';
+
+        $nombre = $user->nombre_completo ?? $user->name ?? 'Usuario';
+        $correo = $user->email ?? 'sin-correo';
+        $subject = 'Solicitud de creador - ' . $nombre;
+        $mensajeCorreo = "Nueva solicitud para convertirse en creador:\n\n"
+            . "Usuario: {$nombre}\n"
+            . "Correo: {$correo}\n"
+            . "Mensaje: " . ($validated['mensaje'] ?? '(sin mensaje)') . "\n"
+            . "Solicitud ID: {$solicitud->id}";
+
+        try {
+            Mail::raw($mensajeCorreo, function ($mail) use ($adminEmail, $subject, $correo) {
+                $mail->to($adminEmail)
+                    ->subject($subject);
+
+                if ($correo && $adminEmail !== $correo) {
+                    $mail->replyTo($correo);
+                }
+            });
+        } catch (\Throwable $th) {
+            Log::warning('No se pudo enviar correo de solicitud de creador', [
+                'error' => $th->getMessage(),
+                'user_id' => $user->id,
+            ]);
+        }
+
+        $successMsg = $pendiente
+            ? 'Solicitud pendiente actualizada y reenviada. Te avisaremos por correo cuando sea revisada.'
+            : 'Solicitud enviada. Te avisaremos por correo cuando sea revisada.';
+
+        if ($asJson) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => $successMsg,
+            ]);
+        }
+
+        return redirect()
+            ->back()
+            ->with('creador_status', 'ok')
+            ->with('creador_message', $successMsg);
     }
 
     /**

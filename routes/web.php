@@ -291,6 +291,9 @@ Route::middleware(['auth', 'role:COLABORADOR'])->group(function () {
     Route::get('/colaborador', [ColaboradorController::class, 'index'])
         ->name('colaborador.dashboard');
 
+    Route::post('/colaborador/solicitar-creador', [ColaboradorController::class, 'solicitarCreador'])
+        ->name('colaborador.solicitar-creador');
+
     Route::get('/colaborador/proyectos', [ColaboradorController::class, 'proyectos'])
         ->name('colaborador.proyectos');
 

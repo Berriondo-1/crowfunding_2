@@ -86,16 +86,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                
-                @php
-                    $userName = Auth::user()->nombre_completo ?? Auth::user()->name ?? 'Usuario';
-                    $userEmail = Auth::user()->email ?? '';
-                    $subject = urlencode("Solicitud de creador - {$userName}");
-                    $body = urlencode("Hola, quiero ser creador en CrowdUp.\nNombre: {$userName}\nCorreo: {$userEmail}\nMensaje:");
-                    $gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1&to=nicolas.rodriguez.quintero@correounivalle.edu.co&su={$subject}&body={$body}";
-                @endphp
-                <a href="{{ $gmailUrl }}"
-                   target="_blank" rel="noopener noreferrer"
+                <a href="{{ route('profile.edit') }}#solicitud-creador"
                    class="inline-flex items-center justify-center gap-2 h-10 rounded-lg bg-[#4F46E5] text-white font-bold px-4 text-sm uppercase tracking-wide hover:bg-indigo-500">
                     Convertirme en creador
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

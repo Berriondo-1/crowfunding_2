@@ -1,4 +1,4 @@
-@extends('colaborador.layouts.panel')
+﻿@extends('colaborador.layouts.panel')
 
 @section('title', 'Mi perfil')
 @section('active', 'perfil')
@@ -25,6 +25,69 @@
         </div>
     @endif
 
+    @if (session('creador_message'))
+        @php
+            $isOk = session('creador_status') === 'ok';
+            $classes = $isOk
+                ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100'
+                : 'border-amber-400/40 bg-amber-500/10 text-amber-50';
+        @endphp
+        <div class="max-w-4xl mx-auto rounded-2xl px-4 py-3 text-sm {{ $classes }}">
+            {{ session('creador_message') }}
+        </div>
+    @endif
+
+    <section id="solicitud-creador" class="max-w-4xl mx-auto rounded-3xl border border-white/15 bg-[#030712] shadow-[0_24px_60px_rgba(0,0,0,0.55)] p-5 space-y-4 relative overflow-hidden">
+        <div class="absolute inset-x-0 top-0 h-1 bg-indigo-500/70"></div>
+        <header class="space-y-1">
+            <h2 class="text-lg font-semibold text-white">Solicitar rol de creador</h2>
+            <p class="text-sm text-zinc-400">Envia la solicitud para cambiar a creador. Revisaremos tus datos y te notificaremos por correo.</p>
+            @if (!empty($solicitudCreador))
+                <p class="text-xs text-zinc-500">Estado actual: <span class="font-semibold text-white">{{ ucfirst($solicitudCreador->estado) }}</span> ({{ $solicitudCreador->created_at?->format('d/m/Y H:i') }})</p>
+            @endif
+        </header>
+
+        <form method="post" action="{{ route('colaborador.solicitar-creador') }}" class="space-y-4">
+            @csrf
+            <div class="grid gap-3 sm:grid-cols-2 text-sm text-zinc-200">
+                <div>
+                    <p class="text-[11px] uppercase tracking-wide text-zinc-500">Nombre</p>
+                    <p class="font-semibold">{{ $user->nombre_completo ?? $user->name }}</p>
+                </div>
+                <div>
+                    <p class="text-[11px] uppercase tracking-wide text-zinc-500">Correo</p>
+                    <p class="font-semibold">{{ $user->email }}</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <label for="mensaje_creador" class="text-sm text-zinc-200">Mensaje (opcional)</label>
+                <textarea
+                    id="mensaje_creador"
+                    name="mensaje"
+                    rows="3"
+                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:border-indigo-500 focus:ring-indigo-500"
+                    placeholder="Comparte un resumen de tu experiencia y del proyecto que quieres lanzar."
+                    maxlength="1000"
+                >{{ old('mensaje') }}</textarea>
+                @error('mensaje')
+                    <p class="text-xs text-red-300">{{ $message }}</p>
+                @enderror
+                @if (!empty($solicitudCreador) && $solicitudCreador->estado === 'pendiente')
+                    <p class="text-xs text-amber-300">Ya existe una solicitud pendiente; si envias de nuevo, actualizaremos el mensaje y reenviaremos la notificacion.</p>
+                @endif
+            </div>
+            <div class="flex items-center justify-between gap-2">
+                <p class="text-xs text-zinc-500">El equipo validara tus datos y respondara al correo de tu cuenta.</p>
+                <button
+                    type="submit"
+                    class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+                >
+                    Enviar solicitud
+                </button>
+            </div>
+        </form>
+    </section>
+
     <section class="max-w-4xl mx-auto rounded-3xl border border-white/15 bg-[#030712] shadow-[0_24px_60px_rgba(0,0,0,0.55)] p-5 space-y-4 relative overflow-hidden">
         <div class="absolute inset-x-0 top-0 h-1 bg-sky-500/70"></div>
         <header class="space-y-1">
@@ -48,7 +111,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span id="foto-name">Sube una imagen (JPG, PNG, WEBP, máx. 4MB)</span>
+                    <span id="foto-name">Sube una imagen (JPG, PNG, WEBP, max. 4MB)</span>
                     <input id="foto_perfil" name="foto_perfil" type="file" accept=".jpg,.jpeg,.png,.webp" class="hidden">
                 </label>
                 @error('foto_perfil')
@@ -97,7 +160,6 @@
                 @enderror
             </div>
 
-            <div class="space-y
             <div class="space-y-2 md:col-span-2">
                 <label for="biografia" class="text-sm text-zinc-200">Biograf?a</label>
                 <textarea id="biografia" name="biografia" rows="4" class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:border-sky-500 focus:ring-sky-500">{{ old('biografia', $user->biografia) }}</textarea>
