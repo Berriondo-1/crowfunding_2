@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
+use App\Support\RoleRedirector;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,28 +51,38 @@ class RegisteredUserController extends Controller
                 ),
             ],
         ], [
-            'password.required' => 'Debes ingresar una contraseña.',
-            'password.confirmed' => 'Las contraseñas no coinciden.',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
-            'password.mixed_case' => 'La contraseña debe incluir mayusculas y minúsculas.',
-            'password.letters' => 'La contraseña debe incluir letras.',
-            'password.numbers' => 'La contraseña debe incluir al menos un número.',
-            'password.symbols' => 'La contraseña debe incluir al menos un símbolo.',
-            'password.uncompromised' => 'Esta contraseña es insegura, usa una diferente.',
+            'password.required' => 'Debes ingresar una contrasena.',
+            'password.confirmed' => 'Las contrasenas no coinciden.',
+            'password.min' => 'La contrasena debe tener al menos 8 caracteres.',
+            'password.mixed_case' => 'La contrasena debe incluir mayusculas y minusculas.',
+            'password.letters' => 'La contrasena debe incluir letras.',
+            'password.numbers' => 'La contrasena debe incluir al menos un numero.',
+            'password.symbols' => 'La contrasena debe incluir al menos un simbolo.',
+            'password.uncompromised' => 'Esta contrasena es insegura, usa una diferente.',
         ]);
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
+        // Rol por defecto: colaborador
+        $colabRole = Role::firstOrCreate(['nombre_rol' => 'COLABORADOR']);
+        $user->roles()->syncWithoutDetaching([$colabRole->id]);
+
         event(new Registered($user));
 
         Auth::login($user);
 
-        // Forzamos a la página de inicio, sin usar intended
+        // Forzamos a olvidar la URL previa protegida para enviar siempre al panel
         $request->session()->forget('url.intended');
 
-        return redirect('/');
+        if ($redirect = RoleRedirector::redirect($user)) {
+            return $redirect;
+        }
+
+        // Fallback por si no se encuentra un panel segun rol
+        return redirect()->route('colaborador.dashboard');
     }
 }

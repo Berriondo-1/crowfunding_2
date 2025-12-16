@@ -61,5 +61,78 @@
             </div>
         </div>
     </main>
+
+    <!-- Chat n8n unificado para panel admin -->
+    <div id="n8n-chat"></div>
+    <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+    <style>
+        :root{
+            --chat--color--primary:#4f46e5;
+            --chat--color--primary-shade-50:#4338ca;
+            --chat--color--primary--shade-100:#3730a3;
+            --chat--color--secondary:#22c55e;
+            --chat--color-secondary-shade-50:#16a34a;
+            --chat--color-dark:#0b1220;
+            --chat--color-light:#0f172a;
+            --chat--color-light-shade-50:#111827;
+            --chat--color-light-shade-100:#1f2937;
+            --chat--color-disabled:#64748b;
+            --chat--color-typing:#94a3b8;
+            --chat--body--background:#0b1220;
+            --chat--footer--background:#0b1220;
+            --chat--footer--color:#e2e8f0;
+            --chat--header--background:linear-gradient(135deg,#4f46e5,#22c55e);
+            --chat--header--color:#f8fafc;
+            --chat--message--bot--background:#111827;
+            --chat--message--bot--color:#e5e7eb;
+            --chat--message--user--background:#22c55e;
+            --chat--message--user--color:#0b1220;
+            --chat--message--pre--background:#0b1220;
+            --chat--window--border:1px solid #1f2937;
+            --chat--window--border-radius:18px;
+            --chat--window--width:420px;
+            --chat--window--height:620px;
+            --chat--toggle--background:#4f46e5;
+            --chat--toggle--hover--background:#4338ca;
+            --chat--toggle--active--background:#3730a3;
+            --chat--toggle--color:#f8fafc;
+            --chat--button--background:#4f46e5;
+            --chat--button--hover--background:#4338ca;
+            --chat--button--color:#e2e8f0;
+            --chat--input--background:#0f172a;
+            --chat--input--text-color:#e2e8f0;
+            --chat--color-white:#f8fafc;
+        }
+    </style>
+    <script type="module">
+        import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+        createChat({
+            webhookUrl: 'https://crowfunding.app.n8n.cloud/webhook/ec74f167-1a5d-4b2b-b8f8-f28aa730c9d3/chat',
+            webhookConfig: { method: 'POST', headers: {} },
+            target: '#n8n-chat',
+            mode: 'window',
+            chatInputKey: 'chatInput',
+            chatSessionKey: 'sessionId',
+            loadPreviousSession: true,
+            metadata: {},
+            showWelcomeScreen: false,
+            defaultLanguage: 'en',
+            initialMessages: [
+                'Hola, bienvenido a CrowdUp',
+                '¿Cómo te puedo ayudar hoy?'
+            ],
+            i18n: {
+                en: {
+                    title: 'Asistente Guia',
+                    subtitle: "Disponible para ayudarte 24/7",
+                    footer: '',
+                    getStarted: 'Nueva conversacion',
+                    inputPlaceholder: 'Escribe tu pregunta',
+                },
+            },
+            enableStreaming: false,
+        });
+    </script>
 </body>
 </html>
