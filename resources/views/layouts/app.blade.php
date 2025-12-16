@@ -10,8 +10,7 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" />
-        
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -33,13 +32,5 @@
                 {{ $slot }}
             </main>
         </div>
-        <script type="module">
-          import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
-
-          createChat({
-             webhookUrl: 'https://crowfunding.app.n8n.cloud/webhook/ec74f167-1a5d-4b2b-b8f8-f28aa730c9d3/chat'
-            });
-        </script>
-
-        </body>
-        </html>
+    </body>
+</html>
