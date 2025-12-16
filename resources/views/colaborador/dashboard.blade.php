@@ -4,7 +4,7 @@
 @section('active', 'general')
 
 @section('content')
-<div id="general" class="px-4 pt-6 pb-10 lg:px-8 space-y-8">
+<div id="general" class="px-4 pt-6 pb-10 lg:px-8 space-y-6">
 
     {{-- Hero / resumen --}}
     <section class="admin-hero rounded-2xl p-5 sm:p-6 lg:p-6 text-white flex flex-col sm:flex-row sm:items-center gap-6">
@@ -51,6 +51,63 @@
             </div>
         </div>
     </section>
+    {{-- CTA: conviertete en creador --}}
+    <section class="relative rounded-2xl border border-[#1E293B] bg-[#0B1220] text-white p-4 sm:p-4 pl-5 sm:pl-6 shadow-none before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r before:from-indigo-500/30 before:via-indigo-400/20 before:to-cyan-300/20" style="margin-top:12px;margin-bottom:12px;">
+        <div class="absolute left-0 top-0 bottom-0 w-[4px] rounded-l-2xl bg-gradient-to-b from-indigo-500 to-cyan-300"></div>
+        <button type="button" class="absolute top-2 right-2 text-white/50 hover:text-white inline-flex items-center justify-center rounded-md p-1" aria-label="Cerrar aviso">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        <div class="flex flex-col lg:flex-row lg:items-center gap-4 pl-3">
+            <div class="flex-1 space-y-1">
+                <p class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-100/80">
+                    <span class="inline-flex items-center rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-bold text-[#3730A3]">
+                        NUEVO
+                    </span>
+                    Conviertete en creador
+                </p>
+                <h2 class="text-lg sm:text-[19px] font-bold leading-snug line-clamp-2">
+                    Quieres crear tu propio proyecto?
+                </h2>
+                <p class="text-[13px] text-zinc-300 leading-relaxed">
+                    Cambiate a Creador y lanza campanas con metas y recompensas.
+                </p>
+                <div class="flex flex-wrap gap-3 text-[12px] text-zinc-200 pt-1">
+                    <span class="inline-flex items-center gap-1">
+                        <span class="text-emerald-300">&#10003;</span> Configura en minutos
+                    </span>
+                    <span class="inline-flex items-center gap-1">
+                        <span class="text-sky-300">&#128274;</span> Verificacion segura
+                    </span>
+                    <span class="inline-flex items-center gap-1">
+                        <span class="text-amber-300">&#128205;</span> Guia paso a paso
+                    </span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                
+                @php
+                    $userName = Auth::user()->nombre_completo ?? Auth::user()->name ?? 'Usuario';
+                    $userEmail = Auth::user()->email ?? '';
+                    $subject = urlencode("Solicitud de creador - {$userName}");
+                    $body = urlencode("Hola, quiero ser creador en CrowdUp.\nNombre: {$userName}\nCorreo: {$userEmail}\nMensaje:");
+                    $gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1&to=nicolas.rodriguez.quintero@correounivalle.edu.co&su={$subject}&body={$body}";
+                @endphp
+                <a href="{{ $gmailUrl }}"
+                   target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center justify-center gap-2 h-10 rounded-lg bg-[#4F46E5] text-white font-bold px-4 text-sm uppercase tracking-wide hover:bg-indigo-500">
+                    Convertirme en creador
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+
+
 
     {{-- Grid de proyectos para explorar --}}
     <section class="space-y-4">
