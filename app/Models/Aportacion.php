@@ -18,6 +18,7 @@ class Aportacion extends Model
         'fecha_aportacion',
         'estado_pago',
         'id_transaccion_pago',
+        'metodo_pago',
     ];
 
     protected $casts = [

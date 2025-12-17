@@ -9,6 +9,7 @@ use App\Models\Proyecto;
 use App\Models\ProyectoCategoria;
 use App\Models\Proveedor;
 use App\Models\ReporteSospechoso;
+use App\Models\User;
 use App\Services\PaypalService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -54,6 +55,9 @@ class ColaboradorController extends Controller
                 'aportaciones' => function ($q) use ($colaboradorId) {
                     $q->where('colaborador_id', $colaboradorId);
                 },
+            ])
+            ->withCount([
+                'hitos as hitos_cumplidos_count' => fn($q) => $q->where('es_hito', true),
             ])
             ->withAvg('calificaciones as rating_promedio', 'puntaje')
             ->withCount('calificaciones as rating_total')
@@ -176,11 +180,14 @@ class ColaboradorController extends Controller
             ->where('colaborador_id', $colaboradorId)
             ->get();
 
-        $proyectosAportados = $aportaciones
-            ->pluck('proyecto')
-            ->filter()
-            ->unique('id')
-            ->values();
+        $proyectoIds = $aportaciones->pluck('proyecto.id')->filter()->unique()->values();
+
+        $proyectosAportados = Proyecto::with('creador')
+            ->withCount([
+                'hitos as hitos_cumplidos_count' => fn($q) => $q->where('es_hito', true),
+            ])
+            ->whereIn('id', $proyectoIds)
+            ->get();
 
         return view('colaborador.proyectos', compact('proyectosAportados'));
     }
@@ -240,6 +247,7 @@ class ColaboradorController extends Controller
     public function reportes(Request $request): View
     {
         $q = $request->query('q');
+        $selectedProjectId = $request->query('proyecto');
 
         $proyectos = Proyecto::where('estado', 'publicado')
             ->when($q, function ($query) use ($q) {
@@ -249,7 +257,14 @@ class ColaboradorController extends Controller
             ->limit(15)
             ->get();
 
-        return view('colaborador.reportes', compact('proyectos', 'q'));
+        if ($selectedProjectId && !$proyectos->contains('id', $selectedProjectId)) {
+            $extra = Proyecto::where('estado', 'publicado')->find($selectedProjectId);
+            if ($extra) {
+                $proyectos->prepend($extra);
+            }
+        }
+
+        return view('colaborador.reportes', compact('proyectos', 'q', 'selectedProjectId'));
     }
 
     public function storeReporteSospechoso(Request $request): RedirectResponse
@@ -289,6 +304,43 @@ class ColaboradorController extends Controller
     }
 
     /**
+     * Perfil público de un creador para colaboradores.
+     */
+    public function showCreador(User $creador): View
+    {
+        if (!$creador->hasRole('CREADOR')) {
+            abort(404);
+        }
+
+        $proyectos = Proyecto::withAvg('calificaciones as rating_promedio', 'puntaje')
+            ->withCount('calificaciones as rating_total')
+            ->where('creador_id', $creador->id)
+            ->where('estado', 'publicado')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $proyectoIds = $proyectos->pluck('id');
+        $aportadoAportes = $proyectoIds->isNotEmpty()
+            ? Aportacion::whereIn('proyecto_id', $proyectoIds)->sum('monto')
+            : 0;
+        $aportadoDeclarado = $proyectos->sum('monto_recaudado');
+        $recaudado = max($aportadoAportes, $aportadoDeclarado);
+
+        $colaboradoresUnicos = $proyectoIds->isNotEmpty()
+            ? Aportacion::whereIn('proyecto_id', $proyectoIds)->distinct('colaborador_id')->count('colaborador_id')
+            : 0;
+
+        $metrics = [
+            'proyectos' => $proyectos->count(),
+            'meta' => $proyectos->sum('meta_financiacion'),
+            'recaudado' => $recaudado,
+            'colaboradores' => $colaboradoresUnicos,
+        ];
+
+        return view('colaborador.creadores-show', compact('creador', 'proyectos', 'metrics'));
+    }
+
+    /**
      * Detalle de un proyecto para el colaborador
      * - Puede ver cualquier proyecto, haya aportado o no
      */
@@ -320,7 +372,16 @@ class ColaboradorController extends Controller
             ->latest('fecha_calificacion')
             ->get();
 
-        return view('colaborador.proyectos-show', compact('proyecto', 'aporteUsuario', 'haAportado', 'calificacionUsuario', 'calificaciones'));
+        $topAportantes = Aportacion::with('colaborador')
+            ->where('proyecto_id', $proyecto->id)
+            ->where('estado_pago', 'pagado')
+            ->select('colaborador_id', DB::raw('SUM(monto) as total'), DB::raw('COUNT(*) as aportes'))
+            ->groupBy('colaborador_id')
+            ->orderByDesc('total')
+            ->take(5)
+            ->get();
+
+        return view('colaborador.proyectos-show', compact('proyecto', 'aporteUsuario', 'haAportado', 'calificacionUsuario', 'calificaciones', 'topAportantes'));
     }
 
     public function resumenProyecto(Proyecto $proyecto): View
@@ -339,7 +400,16 @@ class ColaboradorController extends Controller
             ->where('colaborador_id', $colaboradorId)
             ->first();
 
-        return view('colaborador.proyectos-resumen', compact('proyecto', 'aporteUsuario', 'haAportado', 'calificacionUsuario'));
+        $topAportantes = Aportacion::with('colaborador')
+            ->where('proyecto_id', $proyecto->id)
+            ->where('estado_pago', 'pagado')
+            ->select('colaborador_id', DB::raw('SUM(monto) as total'), DB::raw('COUNT(*) as aportes'))
+            ->groupBy('colaborador_id')
+            ->orderByDesc('total')
+            ->take(5)
+            ->get();
+
+        return view('colaborador.proyectos-resumen', compact('proyecto', 'aporteUsuario', 'haAportado', 'calificacionUsuario', 'topAportantes'));
     }
 
     public function calificarProyecto(Request $request, Proyecto $proyecto): RedirectResponse
@@ -509,14 +579,15 @@ class ColaboradorController extends Controller
         if (app()->environment('testing')) {
             $aportacion = null;
             DB::transaction(function () use ($proyecto, $monto, &$aportacion) {
-                $aportacion = Aportacion::create([
-                    'colaborador_id' => Auth::id(),
-                    'proyecto_id' => $proyecto->id,
-                    'monto' => $monto,
-                    'fecha_aportacion' => now(),
-                    'estado_pago' => 'pagado',
-                    'id_transaccion_pago' => 'TEST-'.uniqid(),
-                ]);
+                    $aportacion = Aportacion::create([
+                        'colaborador_id' => Auth::id(),
+                        'proyecto_id' => $proyecto->id,
+                        'monto' => $monto,
+                        'fecha_aportacion' => now(),
+                        'estado_pago' => 'pagado',
+                        'id_transaccion_pago' => 'TEST-'.uniqid(),
+                        'metodo_pago' => 'PayPal (test)',
+                    ]);
                 $proyecto->increment('monto_recaudado', $monto);
             });
 
@@ -543,6 +614,7 @@ class ColaboradorController extends Controller
                     'fecha_aportacion' => now(),
                     'estado_pago' => 'pendiente',
                     'id_transaccion_pago' => null,
+                    'metodo_pago' => 'PayPal',
                 ]);
             });
 
@@ -632,8 +704,12 @@ class ColaboradorController extends Controller
         $paidAmount = (float) data_get($capture, 'purchase_units.0.payments.captures.0.amount.value', 0);
         $amountMatches = abs($paidAmount - (float) $aportacion->monto) < 0.01;
 
+        $paymentSourceCard = strtoupper((string) data_get($capture, 'payment_source.card.brand', ''));
+        $paymentSourcePaypal = strtoupper((string) data_get($capture, 'payment_source.paypal.funding_source', ''));
+        $metodoPago = $paymentSourceCard ?: ($paymentSourcePaypal ?: 'PayPal');
+
         if ($status === 'COMPLETED' && $amountMatches) {
-            DB::transaction(function () use ($aportacion, $captureId, $orderId) {
+            DB::transaction(function () use ($aportacion, $captureId, $orderId, $metodoPago) {
                 if ($aportacion->estado_pago !== 'pagado') {
                     $aportacion->proyecto()->increment('monto_recaudado', $aportacion->monto);
                 }
@@ -642,6 +718,7 @@ class ColaboradorController extends Controller
                     'estado_pago' => 'pagado',
                     'id_transaccion_pago' => $captureId ?? $orderId,
                     'fecha_aportacion' => now(),
+                    'metodo_pago' => $metodoPago,
                 ]);
             });
 

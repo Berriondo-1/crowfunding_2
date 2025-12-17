@@ -308,6 +308,9 @@ Route::middleware(['auth', 'role:COLABORADOR'])->group(function () {
         ->name('colaborador.reportes.store');
     Route::get('/colaborador/reportes/mis', [ColaboradorController::class, 'misReportes'])
         ->name('colaborador.reportes.mis');
+
+    Route::get('/colaborador/creadores/{creador}', [ColaboradorController::class, 'showCreador'])
+        ->name('colaborador.creadores.show');
     
     Route::get('/colaborador/proyectos/{proyecto}', [ColaboradorController::class, 'showProyecto'])
         ->name('colaborador.proyectos.show');

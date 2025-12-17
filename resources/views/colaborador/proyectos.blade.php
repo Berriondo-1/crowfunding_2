@@ -42,6 +42,9 @@
                     $meta = $proyecto->meta_financiacion ?: 1;
                     $recaudado = $proyecto->monto_recaudado ?? 0;
                     $progreso = $meta > 0 ? min(100, round(($recaudado / $meta) * 100)) : 0;
+                    $totalHitos = is_array($proyecto->cronograma) ? collect($proyecto->cronograma)->filter(fn($h) => is_array($h))->count() : 0;
+                    $hitosCumplidos = (int) ($proyecto->hitos_cumplidos_count ?? 0);
+                    $progresoHitos = $totalHitos > 0 ? min(100, round(($hitosCumplidos / $totalHitos) * 100)) : 0;
                     $estado = strtoupper($proyecto->estado ?? 'EN PROGRESO');
                     $estadoClase = match($estado) {
                         'PAGADO', 'FINALIZADO', 'PUBLICADO' => 'bg-emerald-500/15 text-emerald-200 border-emerald-400/40',
@@ -84,6 +87,20 @@
                             <div class="flex items-center justify-between text-[12px] text-zinc-300">
                                 <span>Recaudado: <span class="text-white font-semibold">${{ number_format($recaudado, 0, ',', '.') }}</span></span>
                                 <span>Meta: <span class="text-white font-semibold">${{ number_format($meta, 0, ',', '.') }}</span></span>
+                            </div>
+                            <div class="pt-2 space-y-2">
+                                <div class="flex items-center justify-between text-[12px] text-zinc-300">
+                                    <span>Avance de hitos</span>
+                                    <span class="text-sm font-semibold text-emerald-200">
+                                        {{ $progresoHitos }}% @if($totalHitos) ({{ $hitosCumplidos }} de {{ $totalHitos }}) @endif
+                                    </span>
+                                </div>
+                                <div class="h-2 w-full rounded-full bg-zinc-900/70 overflow-hidden ring-1 ring-white/10">
+                                    <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-lime-300 to-amber-300" style="width: {{ $progresoHitos }}%;"></div>
+                                </div>
+                                @unless($totalHitos)
+                                    <p class="text-[11px] text-zinc-500">Cronograma no definido.</p>
+                                @endunless
                             </div>
                         </div>
 

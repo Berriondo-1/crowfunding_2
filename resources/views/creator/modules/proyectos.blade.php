@@ -89,6 +89,9 @@
                                 $meta = $proyecto->meta_financiacion ?: 1;
                                 $recaudado = $proyecto->monto_recaudado ?? 0;
                                 $progreso = $meta > 0 ? min(100, round(($recaudado / $meta) * 100)) : 0;
+                                $totalHitos = is_array($proyecto->cronograma) ? collect($proyecto->cronograma)->filter(fn($h) => is_array($h))->count() : 0;
+                                $hitosCumplidos = (int) ($proyecto->hitos_cumplidos_count ?? 0);
+                                $progresoHitos = $totalHitos > 0 ? min(100, round(($hitosCumplidos / $totalHitos) * 100)) : 0;
                                 $imagenPortada = $proyecto->imagen_portada
                                     ? \Illuminate\Support\Facades\Storage::url($proyecto->imagen_portada)
                                     : 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80';
@@ -142,6 +145,18 @@
                                         </div>
                                     </div>
                                     <p class="text-[12px] text-zinc-500">{{ $proyecto->aportaciones_count ?? 0 }} aportes</p>
+                                    <div class="pt-2 space-y-2">
+                                        <div class="flex items-center justify-between text-[12px] text-zinc-300">
+                                            <span class="font-semibold">Avance de hitos</span>
+                                            <span class="text-sm font-bold text-emerald-200">{{ $progresoHitos }}% @if($totalHitos) ({{ $hitosCumplidos }} de {{ $totalHitos }}) @endif</span>
+                                        </div>
+                                        <div class="h-2 w-full rounded-full bg-zinc-900/70 overflow-hidden ring-1 ring-white/10">
+                                            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-lime-300 to-amber-300 shadow-[0_0_12px_rgba(74,222,128,0.45)]" style="width: {{ $progresoHitos }}%;"></div>
+                                        </div>
+                                        @unless($totalHitos)
+                                            <p class="text-[11px] text-zinc-500">Cronograma no definido.</p>
+                                        @endunless
+                                    </div>
                                 </div>
 
                                 <div class="flex gap-2">

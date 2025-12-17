@@ -44,13 +44,14 @@ class CreatorController extends Controller
             ->whereHas('proyecto', fn($q) => $q->where('creador_id', $userId))
             ->get();
 
-        $fondosRetenidos = $solicitudes->where('estado', 'pendiente')->sum('monto_solicitado');
-        $fondosLiberados = $solicitudes->whereIn('estado', ['liberado', 'pagado', 'gastado'])->sum('monto_solicitado');
-        $fondosGastados = $solicitudes->where('estado', 'gastado')->sum('monto_solicitado');
-        $totalSolicitado = $solicitudes->sum('monto_solicitado');
-        $transparencia = $totalSolicitado ? round(($fondosLiberados / $totalSolicitado) * 100) : 0;
-        $pendientesPorJustificar = max($totalSolicitado - $fondosLiberados, 0);
+        $fondosLiberados = $solicitudes->whereIn('estado', ['aprobado', 'liberado', 'pagado', 'gastado'])->sum('monto_solicitado');
+        $fondosRetenidos = max($recaudado - $fondosLiberados, 0);
+        $fondosGastados = Pago::whereHas('solicitud.proyecto', fn($q) => $q->where('creador_id', $userId))
+            ->where('estado_auditoria', 'aprobado')
+            ->sum('monto');
         $fondosDisponibles = max($fondosLiberados - $fondosGastados, 0);
+        $pendientesPorJustificar = max($fondosLiberados - $fondosGastados, 0);
+        $transparencia = $fondosLiberados > 0 ? round(($fondosGastados / $fondosLiberados) * 100) : 0;
 
         $lastAportacion = Aportacion::whereHas('proyecto', fn($q) => $q->where('creador_id', $userId))
             ->latest()
@@ -151,6 +152,9 @@ class CreatorController extends Controller
             })
             ->when($estado, fn($q) => $q->where('estado', $estado))
             ->withCount('aportaciones')
+            ->withCount([
+                'hitos as hitos_cumplidos_count' => fn($q) => $q->where('es_hito', true),
+            ])
             ->latest()
             ->get();
 
@@ -529,7 +533,7 @@ class CreatorController extends Controller
             'fecha_limite' => ['nullable', 'date'],
             'cronograma' => ['nullable', 'string'],
             'presupuesto' => ['nullable', 'string'],
-            'portada' => ['nullable', 'image', 'max:2048'],
+            'portada' => ['nullable', 'image', 'max:8192'],
         ]);
 
         $path = null;
@@ -571,7 +575,7 @@ class CreatorController extends Controller
             'fecha_limite' => ['nullable', 'date'],
             'cronograma' => ['nullable', 'string'],
             'presupuesto' => ['nullable', 'string'],
-            'portada' => ['nullable', 'image', 'max:2048'],
+            'portada' => ['nullable', 'image', 'max:8192'],
         ]);
 
         $payload = $validated;
@@ -600,20 +604,28 @@ class CreatorController extends Controller
         $this->authorizeProyecto($proyecto, $request->user()->id);
 
         $validated = $request->validate([
-            'titulo' => ['required', 'string', 'max:255'],
+            'titulo' => ['nullable', 'string', 'max:255', 'required_without:cronograma_hito'],
             'contenido' => ['nullable', 'string'],
             'es_hito' => ['nullable', 'boolean'],
+            'cronograma_hito' => ['nullable', 'string', 'max:255'],
             'adjuntos.*' => ['nullable', 'file', 'max:8192'],
         ]);
+
+        $cronogramaHito = $validated['cronograma_hito'] ?? null;
+        $titulo = $validated['titulo'] ?? $cronogramaHito ?? 'Hito del proyecto';
+        $contenido = $validated['contenido'] ?? null;
+        if ($cronogramaHito) {
+            $contenido = trim(($contenido ? $contenido . "\n\n" : '') . 'Hito de cronograma marcado como cumplido: ' . $cronogramaHito);
+        }
 
         $paths = $this->storeAdjuntos($request);
 
         ActualizacionProyecto::create([
             'proyecto_id' => $proyecto->id,
-            'titulo' => $validated['titulo'],
-            'contenido' => $validated['contenido'] ?? null,
+            'titulo' => $titulo,
+            'contenido' => $contenido,
             'fecha_publicacion' => now(),
-            'es_hito' => (bool) ($validated['es_hito'] ?? false),
+            'es_hito' => (bool) ($validated['es_hito'] ?? false) || (bool) $cronogramaHito,
             'adjuntos' => $paths,
         ]);
 
@@ -1002,7 +1014,7 @@ class CreatorController extends Controller
         $recaudado = max($recaudadoAportaciones, $recaudadoProyecto);
         $solicitudes = SolicitudDesembolso::where('proyecto_id', $proyectoId)->get();
 
-        $liberado = $solicitudes->whereIn('estado', ['liberado', 'aprobado', 'pagado'])->sum('monto_solicitado');
+        $liberado = $solicitudes->whereIn('estado', ['aprobado', 'liberado', 'pagado', 'gastado'])->sum('monto_solicitado');
         $gastado = $solicitudes->where('estado', 'gastado')->sum('monto_solicitado');
         $pendiente = $solicitudes->where('estado', 'pendiente')->sum('monto_solicitado');
 

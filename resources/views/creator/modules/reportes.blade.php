@@ -9,7 +9,7 @@
     $projectMeta = $selectedProject?->meta_financiacion ?? 0;
     $projectRecaudado = $selectedProject?->monto_recaudado ?? 0;
     $projectProgress = $projectMeta ? min(100, round(($projectRecaudado / $projectMeta) * 100)) : 0;
-    $liberadoTotal = $solicitudes->whereIn('estado', ['liberado', 'pagado', 'gastado'])->sum('monto_solicitado');
+    $liberadoTotal = $solicitudes->whereIn('estado', ['aprobado', 'liberado', 'pagado', 'gastado'])->sum('monto_solicitado');
     $justificadoTotal = $pagos->sum('monto');
     $comprobantesPendientes = max($resumen['pagosProveedor'] - $resumen['pagosConAdjuntos'], 0);
     $solicitudSaldo = $solicitudes->mapWithKeys(function ($sol) use ($pagos) {

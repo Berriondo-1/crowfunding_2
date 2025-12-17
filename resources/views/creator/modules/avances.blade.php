@@ -85,6 +85,70 @@
             No tienes proyectos creados aún. <a class="text-indigo-300 underline" href="{{ route('creador.proyectos') }}">Crea un proyecto</a> para comenzar a publicar avances.
         </section>
     @else
+        @php
+            $cronogramaHitos = collect($selectedProject->cronograma ?? [])->filter(fn($h) => is_array($h))->values();
+            $totalCronograma = $cronogramaHitos->count();
+            $hitosCumplidosCount = $actualizaciones->where('es_hito', true)->count();
+            $progresoHitos = $totalCronograma > 0 ? min(100, round(($hitosCumplidosCount / $totalCronograma) * 100)) : 0;
+        @endphp
+        <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-5 shadow-2xl ring-1 ring-emerald-500/10 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Progreso de hitos</p>
+                    <h3 class="text-lg font-bold text-white">Cumplimiento del cronograma</h3>
+                    <p class="text-sm text-zinc-400">Hitos planificados vs cumplidos.</p>
+                </div>
+                <div class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-100 font-semibold">
+                    {{ $progresoHitos }}% @if($totalCronograma) ({{ $hitosCumplidosCount }} de {{ $totalCronograma }}) @endif
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="h-2 w-full rounded-full bg-zinc-900/80 overflow-hidden ring-1 ring-white/10">
+                    <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-lime-300 to-amber-300 shadow-[0_0_12px_rgba(74,222,128,0.45)]" style="width: {{ $progresoHitos }}%;"></div>
+                </div>
+                <div class="grid gap-3 md:grid-cols-2">
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-zinc-200 space-y-1">
+                        <p class="text-[11px] uppercase tracking-[0.2em] text-zinc-400">Hitos planificados</p>
+                        @if($cronogramaHitos->isEmpty())
+                            <p class="text-zinc-500">Cronograma no definido.</p>
+                        @else
+                            <ul class="space-y-1">
+                                @foreach ($cronogramaHitos as $h)
+                                    <li class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-flex items-center justify-center rounded-full bg-emerald-500/15 text-emerald-200 border border-emerald-400/30 px-2 py-0.5 text-[11px] font-semibold">
+                                                Hito {{ $h['numero'] ?? $loop->iteration }}
+                                            </span>
+                                            <span class="text-sm text-white">{{ $h['titulo'] ?? 'Hito' }}</span>
+                                        </div>
+                                        <span class="text-[11px] text-zinc-400">{{ $h['fecha'] ?? 'Sin fecha' }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-zinc-200 space-y-1">
+                        <p class="text-[11px] uppercase tracking-[0.2em] text-zinc-400">Hitos cumplidos</p>
+                        @php $hitosCumplidos = $actualizaciones->where('es_hito', true); @endphp
+                        @if($hitosCumplidos->isEmpty())
+                            <p class="text-zinc-500">A�n no se han marcado hitos cumplidos.</p>
+                        @else
+                            <ul class="space-y-1">
+                                @foreach ($hitosCumplidos as $h)
+                                    <li class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm text-emerald-200">&#9733;</span>
+                                            <span class="text-sm text-white">{{ $h->titulo }}</span>
+                                        </div>
+                                        <span class="text-[11px] text-zinc-400">{{ optional($h->fecha_publicacion ?? $h->created_at)->format('d/m/Y H:i') }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </section>
         <div class="grid gap-6 lg:grid-cols-[1.05fr,1.15fr]">
             <section class="rounded-3xl border border-white/10 bg-zinc-900/70 p-6 shadow-2xl ring-1 ring-indigo-500/10 space-y-5">
                 <div>
@@ -95,14 +159,38 @@
 
                 <form method="POST" action="{{ route('creador.proyectos.avances', $selectedProjectId) }}" enctype="multipart/form-data" class="space-y-4">
                     @csrf
+                    <input type="hidden" name="es_hito" id="es-hito-flag" value="{{ old('es_hito', 0) }}">
                     <div>
                         <label class="text-sm font-semibold text-white">Título *</label>
-                        <input required name="titulo" class="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="Ej. Entregamos el primer lote a los backers">
+                        <input required name="titulo" value="{{ old('titulo') }}" class="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="Ej. Entregamos el primer lote a los backers">
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-white">Contenido</label>
-                        <textarea name="contenido" rows="4" class="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="Comparte avances, bloqueos o próximos pasos..."></textarea>
+                        <textarea name="contenido" rows="4" class="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400" placeholder="Comparte avances, bloqueos o pr?ximos pasos...">{{ old('contenido') }}</textarea>
                     </div>
+                    @php
+                        $cronogramaHitos = collect($selectedProject->cronograma ?? [])->filter(fn($h) => is_array($h))->values();
+                    @endphp
+                    @if ($cronogramaHitos->isNotEmpty())
+                        <div class="space-y-1">
+                            <label class="text-sm font-semibold text-white">Marcar hito del cronograma</label>
+                            <select name="cronograma_hito" id="cronograma-select" class="mt-1 w-full rounded-xl border border-white/15 bg-zinc-900/80 px-4 py-2.5 text-sm text-white focus:border-emerald-400 focus:ring-emerald-400">
+                                <option value="">Selecciona un hito (opcional)</option>
+                                @foreach ($cronogramaHitos as $hito)
+                                    @php
+                                        $label = ($hito['numero'] ?? '') ? 'Hito '.$hito['numero'].' - ' : '';
+                                        $label .= $hito['titulo'] ?? 'Hito';
+                                        if (!empty($hito['fecha'])) {
+                                        $label .= ' - ' . $hito['fecha'];
+                                        }
+                                        $value = $hito['titulo'] ?? ($hito['numero'] ?? 'Hito');
+                                    @endphp
+                                    <option value="{{ $value }}" @selected(old('cronograma_hito') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-xs text-zinc-400">Si eliges un hito, se marcara como cumplido y se usara como titulo si el campo titulo esta vacio.</p>
+                        </div>
+                    @endif
                     <div class="space-y-2">
                         <label class="text-sm font-semibold text-white">Adjuntos (arrastra o selecciona archivos)</label>
                         <label for="adjuntos-nuevo" class="group flex flex-col gap-2 rounded-xl border-2 border-dashed border-emerald-400/40 bg-emerald-500/5 px-4 py-5 text-sm text-emerald-50 cursor-pointer hover:border-emerald-400 transition">
@@ -330,6 +418,22 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('change', updateList);
         updateList();
     });
+    const cronogramaSelect = document.getElementById('cronograma-select');
+    const tituloInput = document.querySelector("input[name=\"titulo\"]");
+    const esHitoInput = document.getElementById('es-hito-flag');
+    const syncHito = () => {
+        const selected = cronogramaSelect?.value || '';
+        if (esHitoInput) {
+            esHitoInput.value = selected ? '1' : '0';
+        }
+        if (selected && tituloInput && !tituloInput.value.trim()) {
+            tituloInput.value = selected;
+        }
+    };
+    if (cronogramaSelect) {
+        cronogramaSelect.addEventListener('change', syncHito);
+        syncHito();
+    }
 });
 </script>
 @endpush

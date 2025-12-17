@@ -49,6 +49,10 @@
             </div>
         </form>
 
+        @php
+            $checkedProyecto = old('proyecto_id', $selectedProjectId ?? null);
+        @endphp
+
         <form method="POST" action="{{ route('colaborador.reportes.store') }}" enctype="multipart/form-data" class="mt-6 grid gap-4">
             @csrf
             <div class="space-y-2">
@@ -58,20 +62,20 @@
                 @else
                     <div class="grid gap-2 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-3">
                         @foreach ($proyectos as $proj)
-                            <label class="flex items-center gap-3 rounded-lg bg-[#0b1020] px-3 py-2 border border-white/10 hover:border-sky-400/70 @if(old('proyecto_id') == $proj->id) ring-2 ring-sky-500/70 bg-sky-500/10 @endif">
+                            <label class="flex items-center gap-3 rounded-lg bg-[#0b1020] px-3 py-2 border border-white/10 hover:border-sky-400/70 @if($checkedProyecto == $proj->id) ring-2 ring-sky-500/70 bg-sky-500/10 @endif">
                                 <div class="flex-1 space-y-0.5">
-                                    <p class="text-sm font-semibold @if(old('proyecto_id') == $proj->id) text-sky-200 @else text-white @endif">{{ $proj->titulo }}</p>
+                                    <p class="text-sm font-semibold @if($checkedProyecto == $proj->id) text-sky-200 @else text-white @endif">{{ $proj->titulo }}</p>
                                     <p class="text-[11px] text-gray-400">
                                         {{ $proj->categoria ?? 'Sin categoría' }} · Recaudado: ${{ number_format($proj->monto_recaudado ?? 0, 0, ',', '.') }} · Estado: {{ ucfirst($proj->estado ?? 'N/D') }}
                                     </p>
                                 </div>
                                 <span class="inline-flex items-center gap-2 text-sky-300 text-xs">
-                                    @if(old('proyecto_id') == $proj->id)
+                                    @if($checkedProyecto == $proj->id)
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                         </svg>
                                     @endif
-                                    <input type="radio" name="proyecto_id" value="{{ $proj->id }}" class="h-4 w-4 text-sky-500" @checked(old('proyecto_id') == $proj->id)>
+                                    <input type="radio" name="proyecto_id" value="{{ $proj->id }}" class="h-4 w-4 text-sky-500" @checked($checkedProyecto == $proj->id)>
                                 </span>
                             </label>
                         @endforeach

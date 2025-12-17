@@ -101,6 +101,89 @@
             <a href="{{ route('colaborador.proyectos.proveedores', $proyecto) }}" class="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:border-sky-400/60">
                 Ver proveedores
             </a>
+            <a href="{{ route('colaborador.creadores.show', $proyecto->creador) }}" class="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:border-emerald-400/60">
+                Ver creador
+            </a>
+            <a href="{{ route('colaborador.reportes', ['proyecto' => $proyecto->id]) }}" class="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:border-red-400/60">
+                Reportar sospecha
+            </a>
+        </div>
+    </section>
+
+    {{-- Top aportantes resumido --}}
+    <section class="space-y-3">
+        <div class="rounded-2xl border border-[#1F2937] bg-[#0B1220] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#111827]">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.3em] text-zinc-400">Top 5 aportantes</p>
+                    <p class="text-xs text-zinc-500">Últimos 30 días</p>
+                </div>
+                <a href="{{ route('colaborador.aportaciones', ['proyecto' => $proyecto->titulo]) }}" class="text-[12px] font-semibold text-indigo-200 hover:text-white">
+                    Ver todos
+                </a>
+            </div>
+            @php
+                $topAportantesResumen = $topAportantes ?? collect();
+                $topMaxResumen = max($topAportantesResumen->pluck('total')->all() ?: [1]);
+            @endphp
+            @if ($topAportantesResumen->isEmpty())
+                <div class="rounded-xl border border-white/10 bg-black/40 px-3 py-3 text-xs text-zinc-400 mt-3">
+                    Aún no hay aportes registrados en este proyecto.
+                </div>
+            @else
+                <div class="divide-y divide-[#111827]">
+                    @foreach ($topAportantesResumen as $rank => $ap)
+                        @php
+                            $col = $ap->colaborador;
+                            $nombre = $col->nombre_completo ?? $col->name ?? 'Colaborador #'.$ap->colaborador_id;
+                            $badgeColors = [
+                                0 => 'bg-amber-500/20 text-amber-100 border border-amber-400/40',
+                                1 => 'bg-slate-400/20 text-slate-100 border border-slate-300/40',
+                                2 => 'bg-orange-400/20 text-orange-100 border border-orange-300/40',
+                            ];
+                            $progressColors = [
+                                0 => 'bg-amber-400',
+                                1 => 'bg-slate-300',
+                                2 => 'bg-orange-400',
+                            ];
+                            $pill = $badgeColors[$rank] ?? 'bg-indigo-500/15 text-indigo-100 border border-indigo-400/30';
+                            $fill = $progressColors[$rank] ?? 'bg-indigo-500';
+                            $percent = $topMaxResumen ? min(100, round(($ap->total / $topMaxResumen) * 100)) : 0;
+                            $avatar = $col?->foto_perfil ? \Illuminate\Support\Facades\Storage::url($col->foto_perfil) : null;
+                            $initials = collect(explode(' ', $nombre))->map(fn($p) => mb_substr($p, 0, 1))->implode('');
+                        @endphp
+                        <div class="py-3 px-1 flex flex-col gap-2 hover:bg-indigo-500/5 rounded-lg transition-colors {{ $rank === 0 ? 'bg-[linear-gradient(90deg,rgba(251,191,36,0.12),transparent_55%)]' : '' }}">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full {{ $pill }} text-[11px] font-semibold">#{{ $rank + 1 }}</span>
+                                <div class="h-10 w-10 rounded-full overflow-hidden border border-white/10 bg-white/5 flex items-center justify-center text-sm font-semibold text-white">
+                                    @if ($avatar)
+                                        <img src="{{ $avatar }}" alt="Avatar" class="h-full w-full object-cover">
+                                    @else
+                                        {{ strtoupper($initials) }}
+                                    @endif
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-white flex items-center gap-1">
+                                        {{ $nombre }}
+                                        @if ($rank === 0)
+                                            <span class="text-amber-300 text-xs">👑</span>
+                                        @elseif ($rank === 1)
+                                            <span class="text-slate-200 text-xs">⭐</span>
+                                        @elseif ($rank === 2)
+                                            <span class="text-orange-200 text-xs">⭐</span>
+                                        @endif
+                                    </p>
+                                    <p class="text-[12px] text-zinc-400">{{ $ap->aportes }} aporte{{ $ap->aportes === 1 ? '' : 's' }}</p>
+                                </div>
+                                <p class="text-sm font-semibold text-emerald-200">${{ number_format($ap->total, 2, ',', '.') }}</p>
+                            </div>
+                            <div class="h-1.5 rounded-full bg-[#111827] overflow-hidden">
+                                <div class="h-full rounded-full {{ $fill }}" style="width: {{ $percent }}%;"></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </section>
 
@@ -115,27 +198,41 @@
                         Aún no hay hitos publicados para este proyecto.
                     </div>
                 @else
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         @foreach ($proyecto->hitos as $hito)
-                            <article class="rounded-2xl border border-indigo-500/25 bg-indigo-500/5 p-4 space-y-1 shadow-[0_10px_24px_rgba(79,70,229,0.25)]">
-                                <h3 class="text-sm font-semibold text-zinc-50">{{ $hito->titulo ?? 'Actualización' }}</h3>
-                                <p class="text-[11px] text-zinc-400">{{ optional($hito->created_at)->format('d/m/Y H:i') }}</p>
-                                <p class="text-xs text-zinc-200">{{ $hito->descripcion ?? $hito->contenido }}</p>
-                                @if (!empty($hito->adjuntos))
-                                    <div class="mt-2 space-y-1">
-                                        <p class="text-[11px] uppercase tracking-[0.18em] text-zinc-400">Adjuntos</p>
-                                        <div class="flex flex-wrap gap-2 text-[12px] text-emerald-200">
-                                            @foreach ($hito->adjuntos as $adj)
-                                                <a href="{{ \Illuminate\Support\Facades\Storage::url($adj) }}" target="_blank" class="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 hover:border-emerald-400 hover:text-white">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
-                                                    </svg>
-                                                    Ver adjunto
+                            @php $adjuntosCount = count($hito->adjuntos ?? []); @endphp
+                            <article class="relative overflow-hidden rounded-2xl border border-emerald-400/25 bg-gradient-to-r from-emerald-500/10 via-indigo-500/10 to-sky-500/10 p-4 shadow-[0_12px_30px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/15 space-y-3">
+                                <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-sky-300 to-indigo-300"></div>
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm text-emerald-200">&#9733;</span>
+                                            <p class="text-sm font-semibold text-white">{{ $hito->titulo ?? 'Actualizacion' }}</p>
+                                        </div>
+                                        <p class="text-xs text-zinc-300">{{ optional($hito->created_at)->format('d/m/Y H:i') }}</p>
+                                        <p class="text-sm text-zinc-100/90">{{ \Illuminate\Support\Str::limit($hito->descripcion ?? $hito->contenido ?? 'Sin descripcion', 160) }}</p>
+                                    </div>
+                                    <span class="rounded-full px-3 py-1 text-[11px] font-semibold bg-emerald-500/15 text-emerald-100 border border-emerald-400/30">Hito cumplido</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs text-zinc-300">
+                                    <p class="{{ $adjuntosCount ? 'text-emerald-200' : 'text-zinc-500' }}">
+                                        {{ $adjuntosCount ? "{$adjuntosCount} archivos adjuntos" : 'Sin adjuntos' }}
+                                    </p>
+                                </div>
+                                <div class="rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-2 text-xs text-zinc-200">
+                                    <p class="text-[11px] text-zinc-400 font-semibold">Adjuntos</p>
+                                    @if ($adjuntosCount)
+                                        <div class="mt-1 flex flex-wrap gap-2">
+                                            @foreach ($hito->adjuntos as $idx => $archivo)
+                                                <a href="{{ \Illuminate\Support\Facades\Storage::url($archivo) }}" target="_blank" class="inline-flex items-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-white hover:border-emerald-300/70">
+                                                    Archivo {{ $idx + 1 }}
                                                 </a>
                                             @endforeach
                                         </div>
-                                    </div>
-                                @endif
+                                    @else
+                                        <p class="mt-1 text-xs text-zinc-500">Sin adjuntos</p>
+                                    @endif
+                                </div>
                             </article>
                         @endforeach
                     </div>
